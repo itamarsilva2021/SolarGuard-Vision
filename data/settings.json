@@ -1,0 +1,19 @@
+{
+    "theme": "dark",
+    "language": "pt_BR",
+    "default_palette": "ironbow",
+    "confidence_threshold": 0.4,
+    "device_preference": "auto",
+    "auto_detect_hotspots": true,
+    "iec_delta_t_low": 3.0,
+    "iec_delta_t_medium": 10.0,
+    "iec_delta_t_critical": 30.0,
+    "company_name": "ThermoPV AI - Engenharia Diagnóstica",
+    "company_document": "00.000.000/0001-00",
+    "company_email": "contato@thermopv.ai",
+    "default_inspector_name": "Engenheiro Termografista Nível 2",
+    "crea_art_number": "CREA / ART Registrada",
+    "auto_backup_enabled": true,
+    "backup_retention_days": 30,
+    "backup_frequency_hours": 24
+}

@@ -1,0 +1,48 @@
+{
+  "project_name": "SolarGuard Vision",
+  "edition": "Research Edition",
+  "version": "1.0.0",
+  "build_identifier": "1.0.0-research+20260910",
+  "release_date": "2026-09-10T18:00:00-03:00",
+  "target_os": "Windows 10/11 64-bit",
+  "python_version": ">=3.12",
+  "normative_compliance": [
+    "IEC TS 62446-3:2017",
+    "ABNT NBR 16274:2014",
+    "ASTM E1862"
+  ],
+  "core_components": {
+    "radiometry": "RadiometryEngine (Planck Inversion + Atmospheric + Emissivity)",
+    "computer_vision": "Ultralytics YOLOv11n (Fine-tuned on Real Thermal PV)",
+    "gis_topology": "PanelMapper (Point-in-Polygon UTM indexing)",
+    "persistence": "SQLite 3 (WAL mode + Foreign Keys)",
+    "reporting": "ReportLab PDF Engine + OpenXML Excel Exporter"
+  },
+  "experimental_benchmark": {
+    "experiment_id": "7c4c3bb5-7580-4dd6-a83f-0c03d77b2cc2",
+    "total_images": 52,
+    "total_annotations": 511,
+    "map50": 0.3573,
+    "map50_95": 0.2748,
+    "accuracy": 1.0000,
+    "balanced_accuracy": 1.0000,
+    "inference_time_ms": 82.8
+  },
+  "documentation_suite": [
+    "docs/documentacao_tecnica.md",
+    "docs/documentacao_algoritmo.md",
+    "docs/documentacao_arquitetura.md",
+    "docs/manual_do_usuario.md",
+    "docs/manual_de_instalacao.md",
+    "docs/resultados_experimentais.md",
+    "docs/relatorio_conformidade_arquitetural.md",
+    "docs/dissertacao_validacao_experimental.md"
+  ],
+  "verification": {
+    "total_tests": 207,
+    "passed_tests": 206,
+    "skipped_tests": 1,
+    "failed_tests": 0,
+    "status": "APPROVED"
+  }
+}

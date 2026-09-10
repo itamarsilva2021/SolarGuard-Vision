@@ -1,0 +1,41 @@
+# ==============================================================================
+# SolarGuard Vision - Dependências de Produção e Desenvolvimento
+# Python: 3.12+
+# ==============================================================================
+
+# Framework Gráfico (GUI Desktop)
+PySide6>=6.7.0
+
+# Inteligência Artificial & Deep Learning
+torch>=2.2.0
+torchvision>=0.17.0
+ultralytics>=8.3.0  # Suporte a YOLOv11 nativo
+
+# Visão Computacional & Processamento Numérico
+opencv-python>=4.9.0
+numpy>=1.26.0
+Pillow>=10.2.0
+
+# Metadados e Radiometria Térmica
+piexif>=1.1.3
+
+# Persistência de Dados
+# SQLite3 é nativo do Python 3.12 (sqlite3 standard library)
+
+# Relatórios & Planilhas
+reportlab>=4.1.0
+openpyxl>=3.1.2
+pandas>=2.2.0
+
+# Mapas & Georreferenciamento
+folium>=0.16.0
+
+# Validação e Utilitários de Domínio
+pydantic>=2.6.0
+
+# Testes Unitários e Cobertura
+pytest>=8.0.0
+pytest-cov>=4.1.0
+
+# Empacotamento para Executável Windows
+pyinstaller>=6.5.0

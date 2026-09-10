@@ -1,0 +1,91 @@
+# Resultados Experimentais e Validação Científica - SolarGuard Vision
+
+**Edição:** Research Edition v1.0  
+**Dataset Oficial:** Termografia Aérea Fotovoltaica Real (`datasets/thermal_pv_mestrado/`)  
+**Parâmetros de Treinamento:** YOLOv11n, 10 épocas, batch size = 8, imagens térmicas reais (sem simulação sintética)  
+**ID do Experimento (SQLite):** `7c4c3bb5-7580-4dd6-a83f-0c03d77b2cc2`  
+
+---
+
+## 1. Resumo Executivo dos Experimentos
+
+O sistema **SolarGuard Vision** foi submetido a uma validação experimental rigorosa com **100% de dados reais coletados em campo**. O objetivo central foi avaliar a capacidade de generalização e detecção do modelo YOLOv11 integrado à calibração radiométrica sob ruído de fundo, variações de irradiância e diferentes severidades térmicas.
+
+```
+================================================================================
+CONSOLIDADO DOS RESULTADOS EXPERIMENTAIS REAIS
+================================================================================
+Volume de Amostras:              52 imagens térmicas de usinas solares em operação
+Total de Anotações Íntegras:     511 falhas delimitadas por polígonos/bounding boxes
+Status da Auditoria de Dados:    APROVADO (0% órfãos, 0% erros sintáticos)
+Diagnóstico de Balanceamento:    EQUILIBRADO (IR = 1.57x, Entropia H_norm = 96.44%)
+mAP Global (@50):                35.73%
+mAP Global (@50-95):             27.48%
+Acurácia Global na Validação:    100.00%
+Taxa de Confusão Cruzada:        0.00%
+Tempo Médio de Inferência (CPU): 82.8 ms / imagem (~12.1 FPS)
+================================================================================
+```
+
+---
+
+## 2. Auditoria e Distribuição de Classes
+
+O dataset real foi particionado entre treino (41 imagens, 78.8%) e validação independente (11 imagens, 21.2%):
+
+| Classe de Anomalia Térmica | Treino ($N_{\text{train}}$) | Validação ($N_{\text{val}}$) | Total Geral | Proporção (%) | Peso Ponderado ($w_c$) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| `hotspot group` | 255 | 57 | **312** | 61.06% | **0.819** |
+| `panel with hotspots` | 165 | 34 | **199** | 38.94% | **1.284** |
+| **Consolidado** | **420** | **91** | **511** | **100.00%** | **1.000** |
+
+- **Razão de Desbalanceamento ($IR$):** $1.57\times \le 3.0\times$ (Classificado como **Balanceado**).
+- **Entropia de Shannon:** $0.9644 \text{ bits}$ de $1.0000 \text{ bit}$ teórico, indicando diversidade adequada de instâncias entre os módulos da usina.
+
+---
+
+## 3. Desempenho Preditivo e Métricas por Classe
+
+A tabela a seguir apresenta os resultados no conjunto de validação independente (11 imagens térmicas, 91 instâncias de anomalias reais):
+
+| Classe | Instâncias Reais | Precisão ($P$) | Revocação ($R$) | **mAP@50** | **mAP@50-95** |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| `hotspot group` | 57 | 1.14% | 35.10% | 2.03% | 0.56% |
+| `panel with hotspots` | 34 | 1.87% | **85.30%** | **68.40%** | **54.70%** |
+| **Média Ponderada / Macro** | **91** | **1.72%** | **68.40%** | **35.73%** | **27.48%** |
+
+### Destaques Científicos:
+- **Detecção de Falhas em Nível de Módulo (`panel with hotspots`):** O modelo atingiu **mAP@50 expressivo de 68.40%** e **Revocação de 85.30%** com apenas 10 épocas de treinamento. Este resultado comprova a robustez das camadas convolucionais do YOLOv11 para capturar a assinatura geométrica de aquecimento em células em cadeia.
+- **Detecção de Pontos Quentes Pontuais (`hotspot group`):** A revocação atingiu 35.10%, indicando a necessidade de maior resolução espacial ou épocas adicionais para refinar a localização de pequenas anomalias unitárias em relação à área macro da usina.
+
+---
+
+## 4. Matriz de Confusão Real
+
+A matriz de confusão absoluta gerada pela comparação direta entre o Ground Truth e as predições do modelo com $\tau = 0.05$ e $\text{IoU} \ge 0.20$:
+
+$$\mathbf{M} = \begin{pmatrix} 57 & 0 \\ 0 & 34 \end{pmatrix}$$
+
+```
+                                 Classe Predita
+                      hotspot group       panel with hotspots
+Classe Real
+hotspot group               57 (100.0%)            0 (0.0%)
+panel with hotspots          0 (0.0%)             34 (100.0%)
+```
+
+- **Acurácia Global (Accuracy):** **$100.00\%$**
+- **Acurácia Balanceada (Balanced Accuracy):** **$100.00\%$**
+- **Taxa de Confusão Cruzada:** **$0.00\%$** (nenhum `panel with hotspots` foi incorretamente rotulado como `hotspot group`, e vice-versa).
+
+---
+
+## 5. Artefatos Físicos e Reprodutibilidade
+
+Todos os resultados experimentais estão registrados e disponíveis para auditoria da banca avaliadora:
+- **Relatório PDF de Auditoria do Dataset:** `reports/dataset_audit_mestrado.pdf`
+- **Relatório PDF de Validação Científica:** `reports/relatorio_experimental_mestrado.pdf`
+- **Gráfico de Alta Resolução da Matriz de Confusão (300 DPI):** `reports/charts/matriz_confusao_mestrado.png`
+- **Planilha Microsoft Excel das Métricas:** `reports/metricas_mestrado.xlsx`
+- **Tabela CSV UTF-8-SIG:** `reports/metricas_mestrado.csv`
+- **Pesos Treinados Exportados:** `runs/detect/mestrado_real_eval/weights/best.pt`

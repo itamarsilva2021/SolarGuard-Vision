@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_df8354a08b79fba3648f8e94f618902d {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.Default.css"/>
+    <script src="https://cdn.jsdelivr.net/gh/python-visualization/folium@main/folium/templates/leaflet_heat.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/ljagis/leaflet-measure@2.1.7/dist/leaflet-measure.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ljagis/leaflet-measure@2.1.7/dist/leaflet-measure.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.css"/>
+</head>
+<body>
+    
+    
+        <div style="position: fixed; 
+                    top: 12px; left: 60px; width: auto; max-width: 480px; height: auto;
+                    background-color: rgba(26, 29, 36, 0.90);
+                    color: #FFFFFF;
+                    padding: 8px 16px;
+                    border: 1px solid #3A4153;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    z-index: 9999;">
+            <div style="font-size: 13px; font-weight: bold; color: #F1C40F; letter-spacing: 0.5px;">☀️ SOLARGUARD VISION</div>
+            <div style="font-size: 12px; font-weight: 600; color: #E0E6ED; margin-top: 2px;">Inspeção Automatizada Completa - E2E - Complexo Solar São Francisco</div>
+            <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">
+                Total de Falhas Detectadas: <b style="color: #E74C3C;">3</b>
+            </div>
+        </div>
+        
+    
+            <div class="folium-map" id="map_df8354a08b79fba3648f8e94f618902d" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_df8354a08b79fba3648f8e94f618902d = L.map(
+                "map_df8354a08b79fba3648f8e94f618902d",
+                {
+                    center: [-9.389078757170916, -40.502718393561274],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 18,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+            L.control.scale().addTo(map_df8354a08b79fba3648f8e94f618902d);
+
+            
+
+        
+    
+            var tile_layer_6a92906c4ef8c39762afdd6ddaf131d3 = L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "Esri World Imagery",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_6a92906c4ef8c39762afdd6ddaf131d3.addTo(map_df8354a08b79fba3648f8e94f618902d);
+        
+    
+            var tile_layer_9f8bfdbf30eb625a456aba1ad129f49a = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            var tile_layer_65fffe694a632336a8b6657eee4e4ede = L.tileLayer(
+                "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 17,
+  "maxNativeZoom": 17,
+  "noWrap": false,
+  "attribution": "OpenTopoMap",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            var marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5 = L.markerClusterGroup(
+                {
+  "maxClusterRadius": 35,
+  "disableClusteringAtZoom": 19,
+}
+            );
+        
+    
+            var marker_64915ede6808272e36cea9f82bff4d2b = L.marker(
+                [-9.389078757170916, -40.502718393561274],
+                {
+}
+            ).addTo(marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5);
+        
+    
+            var icon_df1ddcca52f7762b593719885bb04a7b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "orange",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_7bdcc45ebd685cb5cb9669d71830936d = L.popup({
+  "maxWidth": 380,
+});
+
+        
+            
+                var html_86311c7256326ca99e0dc49c0f3cf4ec = $(`<div id="html_86311c7256326ca99e0dc49c0f3cf4ec" style="width: 100.0%; height: 100.0%;">         <div style="font-family: 'Segoe UI', Arial, sans-serif; min-width: 260px; color: #1E293B; line-height: 1.4;">             <div style="background-color: #E67E22; color: white; padding: 6px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">                 <span>Hotspot</span>                 <span style="font-size: 11px; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">Médio (Classe 2 - IEC)</span>             </div>             <div style="padding: 10px; border: 1px solid #E2E8F0; border-top: none; border-radius: 0 0 6px 6px; background: #F8FAFC;">                 <table style="width: 100%; font-size: 12px; border-collapse: collapse;">                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Temperatura Máxima:</td>                         <td style="padding: 3px 0; font-weight: bold; color: #DC2626; text-align: right;">61.0°C</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Gradiente (ΔT IEC):</td>                         <td style="padding: 3px 0; font-weight: bold; color: #E67E22; text-align: right;">+20.0°C</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Confiança IA:</td>                         <td style="padding: 3px 0; font-weight: bold; text-align: right;">92.0%</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Latitude:</td>                         <td style="padding: 3px 0; font-family: monospace; text-align: right;">-9.389079°</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Longitude:</td>                         <td style="padding: 3px 0; font-family: monospace; text-align: right;">-40.502718°</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Data do Voo:</td>                         <td style="padding: 3px 0; font-size: 11px; text-align: right;">Data não registrada</td>                     </tr>                 </table>                      </div>         </div>         </div>`)[0];
+                popup_7bdcc45ebd685cb5cb9669d71830936d.setContent(html_86311c7256326ca99e0dc49c0f3cf4ec);
+            
+        
+
+        marker_64915ede6808272e36cea9f82bff4d2b.bindPopup(popup_7bdcc45ebd685cb5cb9669d71830936d)
+        ;
+
+        
+    
+    
+            marker_64915ede6808272e36cea9f82bff4d2b.bindTooltip(
+                `<div>
+                     Hotspot | Tmax: 61.0°C | ΔT: 20.0°C | Médio (Classe 2 - IEC)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_64915ede6808272e36cea9f82bff4d2b.setIcon(icon_df1ddcca52f7762b593719885bb04a7b);
+            
+    
+            var circle_marker_3daef4b65db36fabf13f60ba5d6c9083 = L.circleMarker(
+                [-9.389078757170916, -40.502718393561274],
+                {"bubblingMouseEvents": true, "color": "#E67E22", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#E67E22", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 7, "stroke": true, "weight": 2}
+            ).addTo(marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5);
+        
+    
+            var marker_9f9e1883fd03803119869f4d76397b14 = L.marker(
+                [-9.389078757170916, -40.502718393561274],
+                {
+}
+            ).addTo(marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5);
+        
+    
+            var icon_58f6763d8b641a722fd2186303b09cbd = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "orange",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5c5f4d6defbca6e5897a0a18ab758aac = L.popup({
+  "maxWidth": 380,
+});
+
+        
+            
+                var html_a72064ab6999f0cb24d51db21ace8eba = $(`<div id="html_a72064ab6999f0cb24d51db21ace8eba" style="width: 100.0%; height: 100.0%;">         <div style="font-family: 'Segoe UI', Arial, sans-serif; min-width: 260px; color: #1E293B; line-height: 1.4;">             <div style="background-color: #E67E22; color: white; padding: 6px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">                 <span>Hotspot</span>                 <span style="font-size: 11px; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">Médio (Classe 2 - IEC)</span>             </div>             <div style="padding: 10px; border: 1px solid #E2E8F0; border-top: none; border-radius: 0 0 6px 6px; background: #F8FAFC;">                 <table style="width: 100%; font-size: 12px; border-collapse: collapse;">                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Temperatura Máxima:</td>                         <td style="padding: 3px 0; font-weight: bold; color: #DC2626; text-align: right;">61.0°C</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Gradiente (ΔT IEC):</td>                         <td style="padding: 3px 0; font-weight: bold; color: #E67E22; text-align: right;">+20.0°C</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Confiança IA:</td>                         <td style="padding: 3px 0; font-weight: bold; text-align: right;">92.0%</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Latitude:</td>                         <td style="padding: 3px 0; font-family: monospace; text-align: right;">-9.389079°</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Longitude:</td>                         <td style="padding: 3px 0; font-family: monospace; text-align: right;">-40.502718°</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Data do Voo:</td>                         <td style="padding: 3px 0; font-size: 11px; text-align: right;">Data não registrada</td>                     </tr>                 </table>                      </div>         </div>         </div>`)[0];
+                popup_5c5f4d6defbca6e5897a0a18ab758aac.setContent(html_a72064ab6999f0cb24d51db21ace8eba);
+            
+        
+
+        marker_9f9e1883fd03803119869f4d76397b14.bindPopup(popup_5c5f4d6defbca6e5897a0a18ab758aac)
+        ;
+
+        
+    
+    
+            marker_9f9e1883fd03803119869f4d76397b14.bindTooltip(
+                `<div>
+                     Hotspot | Tmax: 61.0°C | ΔT: 20.0°C | Médio (Classe 2 - IEC)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_9f9e1883fd03803119869f4d76397b14.setIcon(icon_58f6763d8b641a722fd2186303b09cbd);
+            
+    
+            var circle_marker_0245a77beb9e032ca8075056eb5851ed = L.circleMarker(
+                [-9.389078757170916, -40.502718393561274],
+                {"bubblingMouseEvents": true, "color": "#E67E22", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#E67E22", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 7, "stroke": true, "weight": 2}
+            ).addTo(marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5);
+        
+    
+            var marker_82424f8aaf4c4456b021a20f8279441c = L.marker(
+                [-9.389078757170916, -40.502718393561274],
+                {
+}
+            ).addTo(marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5);
+        
+    
+            var icon_53198b5dd6626cbdc28cdfac60e6cb7b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "orange",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6184ea79f4f9d0842b0ed3366693750f = L.popup({
+  "maxWidth": 380,
+});
+
+        
+            
+                var html_332a3e54618b52809c83cd4d612eeb0d = $(`<div id="html_332a3e54618b52809c83cd4d612eeb0d" style="width: 100.0%; height: 100.0%;">         <div style="font-family: 'Segoe UI', Arial, sans-serif; min-width: 260px; color: #1E293B; line-height: 1.4;">             <div style="background-color: #E67E22; color: white; padding: 6px 12px; border-radius: 6px 6px 0 0; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">                 <span>Hotspot</span>                 <span style="font-size: 11px; background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 4px;">Médio (Classe 2 - IEC)</span>             </div>             <div style="padding: 10px; border: 1px solid #E2E8F0; border-top: none; border-radius: 0 0 6px 6px; background: #F8FAFC;">                 <table style="width: 100%; font-size: 12px; border-collapse: collapse;">                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Temperatura Máxima:</td>                         <td style="padding: 3px 0; font-weight: bold; color: #DC2626; text-align: right;">61.0°C</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Gradiente (ΔT IEC):</td>                         <td style="padding: 3px 0; font-weight: bold; color: #E67E22; text-align: right;">+20.0°C</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Confiança IA:</td>                         <td style="padding: 3px 0; font-weight: bold; text-align: right;">92.0%</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Latitude:</td>                         <td style="padding: 3px 0; font-family: monospace; text-align: right;">-9.389079°</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Longitude:</td>                         <td style="padding: 3px 0; font-family: monospace; text-align: right;">-40.502718°</td>                     </tr>                     <tr>                         <td style="padding: 3px 0; color: #64748B;">Data do Voo:</td>                         <td style="padding: 3px 0; font-size: 11px; text-align: right;">Data não registrada</td>                     </tr>                 </table>                      </div>         </div>         </div>`)[0];
+                popup_6184ea79f4f9d0842b0ed3366693750f.setContent(html_332a3e54618b52809c83cd4d612eeb0d);
+            
+        
+
+        marker_82424f8aaf4c4456b021a20f8279441c.bindPopup(popup_6184ea79f4f9d0842b0ed3366693750f)
+        ;
+
+        
+    
+    
+            marker_82424f8aaf4c4456b021a20f8279441c.bindTooltip(
+                `<div>
+                     Hotspot | Tmax: 61.0°C | ΔT: 20.0°C | Médio (Classe 2 - IEC)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_82424f8aaf4c4456b021a20f8279441c.setIcon(icon_53198b5dd6626cbdc28cdfac60e6cb7b);
+            
+    
+            var circle_marker_58979233840e0d3977cd063b952023af = L.circleMarker(
+                [-9.389078757170916, -40.502718393561274],
+                {"bubblingMouseEvents": true, "color": "#E67E22", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#E67E22", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 7, "stroke": true, "weight": 2}
+            ).addTo(marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5);
+        
+    
+            marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5.addTo(map_df8354a08b79fba3648f8e94f618902d);
+        
+    
+            var heat_map_3cf0cd4df4da952bb033d2526c86a6cb = L.heatLayer(
+                [[-9.389078757170916, -40.502718393561274, 36.0], [-9.389078757170916, -40.502718393561274, 36.0], [-9.389078757170916, -40.502718393561274, 36.0]],
+                {
+  "minOpacity": 0.35,
+  "maxZoom": 18,
+  "radius": 22,
+  "blur": 15,
+}
+            );
+        
+    
+            var measure_control_875cf8e8e225da79662d5514bbe383db = new L.Control.Measure(
+                {
+  "position": "topleft",
+  "primaryLengthUnit": "meters",
+  "secondaryLengthUnit": "kilometers",
+  "primaryAreaUnit": "sqmeters",
+  "secondaryAreaUnit": "acres",
+});
+            map_df8354a08b79fba3648f8e94f618902d.addControl(measure_control_875cf8e8e225da79662d5514bbe383db);
+
+            // Workaround for using this plugin with Leaflet>=1.8.0
+            // https://github.com/ljagis/leaflet-measure/issues/171
+            L.Control.Measure.include({
+                _setCaptureMarkerIcon: function () {
+                    // disable autopan
+                    this._captureMarker.options.autoPanOnFocus = false;
+                    // default function
+                    this._captureMarker.setIcon(
+                        L.divIcon({
+                            iconSize: this._map.getSize().multiplyBy(2)
+                        })
+                    );
+                },
+            });
+
+        
+    
+            L.control.fullscreen(
+                {
+  "position": "topleft",
+  "title": "Full Screen",
+  "titleCancel": "Exit Full Screen",
+  "forceSeparateButton": false,
+}
+            ).addTo(map_df8354a08b79fba3648f8e94f618902d);
+        
+    
+            var tile_layer_b9f4c749608ea258834410f3179e8400 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detect_retina": false, "max_native_zoom": 19, "max_zoom": 19, "min_zoom": 0, "no_wrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            );
+            var mini_map_d0fa6ab4b58277f73c0d8b0b26d41230 = new L.Control.MiniMap(
+                tile_layer_b9f4c749608ea258834410f3179e8400,
+                {
+  "position": "bottomright",
+  "width": 150,
+  "height": 150,
+  "collapsedWidth": 25,
+  "collapsedHeight": 25,
+  "zoomLevelOffset": -5,
+  "centerFixed": false,
+  "zoomAnimation": false,
+  "toggleDisplay": true,
+  "autoToggleDisplay": false,
+  "minimized": false,
+}
+            );
+            map_df8354a08b79fba3648f8e94f618902d.addControl(mini_map_d0fa6ab4b58277f73c0d8b0b26d41230);
+        
+    
+            var layer_control_2dcae2ba1c4dbc02a3841f4aa3c58a15_layers = {
+                base_layers : {
+                    "\ud83d\udef0\ufe0f Imagem de Sat\u00e9lite (Esri)" : tile_layer_6a92906c4ef8c39762afdd6ddaf131d3,
+                    "\ud83d\uddfa\ufe0f Mapa de Ruas (OpenStreetMap)" : tile_layer_9f8bfdbf30eb625a456aba1ad129f49a,
+                    "\ud83c\udfd4\ufe0f Topografia e Relevo (OpenTopoMap)" : tile_layer_65fffe694a632336a8b6657eee4e4ede,
+                },
+                overlays :  {
+                    "\ud83d\udccd Agrupamento de Falhas (Cluster)" : marker_cluster_7673476856ba85e0dfc1e99bec4bd6f5,
+                    "\ud83d\udd25 Mapa de Calor de Temperatura (HeatMap)" : heat_map_3cf0cd4df4da952bb033d2526c86a6cb,
+                },
+            };
+            let layer_control_2dcae2ba1c4dbc02a3841f4aa3c58a15 = L.control.layers(
+                layer_control_2dcae2ba1c4dbc02a3841f4aa3c58a15_layers.base_layers,
+                layer_control_2dcae2ba1c4dbc02a3841f4aa3c58a15_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": false,
+  "autoZIndex": true,
+}
+            ).addTo(map_df8354a08b79fba3648f8e94f618902d);
+
+        
+</script>
+</html>

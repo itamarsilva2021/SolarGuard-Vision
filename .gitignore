@@ -1,0 +1,54 @@
+# Ambientes Virtuais
+.venv/
+venv/
+ENV/
+env/
+
+# Byte-compiled / otimizadores Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testes e Cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Bancos de Dados Locais e Chaves de Licença
+data/*.sqlite3
+data/*.sqlite3-journal
+data/*.sqlite3-wal
+data/*.sqlite3-shm
+data/*.key
+data/backups/
+data/updates/
+data/license.key
+
+# Logs e Diagnósticos Locais
+logs/*.log
+logs/crashes/
+*.log
+
+# Caches e Arquivos Temporários
+cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# Treinamentos e Runs do YOLO
+runs/
+*.pt.backup
+
+# Arquivos do Sistema Operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
