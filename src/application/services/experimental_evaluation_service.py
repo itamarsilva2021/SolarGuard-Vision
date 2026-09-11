@@ -152,21 +152,25 @@ class ExperimentalEvaluationService:
         )
 
         # ---------------------------------------------------------------------
-        # 5. MATRIZ DE CONFUSÃO COM PREDIÇÕES E GROUND TRUTH REAIS
+        # 5. MATRIZ DE CONFUSÃO E MÉTRICAS REAIS
         # ---------------------------------------------------------------------
-        logger.info("Passo 5/6: Gerando Matriz de Confusão com Predições Reais...")
-        y_true, y_pred, labels = self._extract_real_ground_truth_and_predictions(
-            weights_path=weights_path,
+        logger.info("Passo 5/6: Gerando Matriz de Confusão e Métricas de Validação Real...")
+        y_true, y_pred, resolved_labels = self._extract_real_ground_truth_and_predictions(
             dataset_dir=d_path,
+            weights_path=weights_path,
             class_names=class_names,
             device=device,
         )
 
-        cm_service = ConfusionMatrixService(labels=labels)
-        conf_matrix, resolved_labels = cm_service.compute(y_true, y_pred, labels=labels)
-        cm_img_path = self.output_dir / "charts" / "matriz_confusao_mestrado.png"
+        cm_service = ConfusionMatrixService(labels=resolved_labels)
+        cm_matrix, resolved_labels = cm_service.compute(
+            y_true=y_true,
+            y_pred=y_pred,
+            labels=resolved_labels,
+        )
+        cm_img_path = self.output_dir / "confusion_matrix_mestrado.png"
         cm_service.plot(
-            matrix=conf_matrix,
+            matrix=cm_matrix,
             labels=resolved_labels,
             output_path=cm_img_path,
             title="Matriz de Confusão - Validação Real YOLOv11",
@@ -174,10 +178,13 @@ class ExperimentalEvaluationService:
         logger.info(f"Matriz de confusão gerada e salva em: {cm_img_path}")
 
         # Cálculo de métricas globais de classificação
+        # As anomalias de interesse fotovoltaico são as classes originais (sem background na agregação macro/weighted)
+        target_classes = [class_names[idx] for idx in sorted(class_names.keys())] if class_names else None
         global_class_metrics = ClassificationMetricsCalculator.calculate_from_labels(
             y_true=y_true,
             y_pred=y_pred,
             labels=resolved_labels,
+            target_classes=target_classes,
         )
 
         # ---------------------------------------------------------------------
@@ -252,7 +259,7 @@ class ExperimentalEvaluationService:
             weights_path=weights_path,
             validation_metrics=validation_metrics,
             global_classification_metrics=global_class_metrics,
-            confusion_matrix=conf_matrix,
+            confusion_matrix=cm_matrix,
             confusion_matrix_labels=resolved_labels,
             experiment_record=saved_record,
             audit_pdf_path=audit_pdf_path,
@@ -265,14 +272,16 @@ class ExperimentalEvaluationService:
 
     def _extract_real_ground_truth_and_predictions(
         self,
-        weights_path: Path,
         dataset_dir: Path,
+        weights_path: Path,
         class_names: Dict[int, str],
         device: str = "cpu",
     ) -> Tuple[List[str], List[str], List[str]]:
         """
         Extrai ground truth e predições reais das imagens do conjunto de validação.
         Sem dados simulados!
+        Utiliza matching rigoroso por IoU >= 0.45 com tratamento explícito de
+        falsos negativos (background) e falsos positivos (background).
         """
         from ultralytics import YOLO
         model = YOLO(str(weights_path))
@@ -284,7 +293,10 @@ class ExperimentalEvaluationService:
             val_img_dir = dataset_dir / "images" / "val"
             val_lbl_dir = dataset_dir / "labels" / "val"
 
+        # A lista de labels inclui as classes do dataset mais a classe 'background'
         labels_list = [class_names[idx] for idx in sorted(class_names.keys())]
+        if "background" not in labels_list:
+            labels_list.append("background")
 
         y_true: List[str] = []
         y_pred: List[str] = []
@@ -319,8 +331,8 @@ class ExperimentalEvaluationService:
                         except ValueError:
                             continue
 
-            # Inferência real com o modelo treinado
-            results = model.predict(source=str(img_file), conf=0.05, iou=0.50, device=device, verbose=False)
+            # Inferência real com o modelo treinado (conf=0.25 padrão de detecção científica)
+            results = model.predict(source=str(img_file), conf=0.25, iou=0.50, device=device, verbose=False)
             pred_boxes: List[Tuple[int, float, float, float, float, float]] = []
             if results and len(results) > 0 and results[0].boxes is not None:
                 for b in results[0].boxes:
@@ -328,41 +340,85 @@ class ExperimentalEvaluationService:
                     conf = float(b.conf[0].item())
                     # Coordenadas normalizadas [cx, cy, w, h]
                     xywhn = b.xywhn[0].cpu().numpy()
-                    pred_boxes.append((cls_id, xywhn[0], xywhn[1], xywhn[2], xywhn[3], conf))
+                    pred_boxes.append((cls_id, float(xywhn[0]), float(xywhn[1]), float(xywhn[2]), float(xywhn[3]), conf))
 
-            # Pareamento Ground Truth vs Predição via IoU
-            matched_preds = set()
-            for gt_cls, gcx, gcy, gw, gh in gt_boxes:
-                gt_name = class_names.get(gt_cls, f"class_{gt_cls}")
-                y_true.append(gt_name)
-
-                # Busca a predição mais compatível em sobreposição (IoU)
-                best_iou = 0.0
-                best_pred_cls = None
-                best_pred_idx = -1
-
-                for idx, (p_cls, pcx, pcy, pw, ph, pconf) in enumerate(pred_boxes):
-                    if idx in matched_preds:
-                        continue
-                    iou = self._calculate_box_iou((gcx, gcy, gw, gh), (pcx, pcy, pw, ph))
-                    if iou > best_iou:
-                        best_iou = iou
-                        best_pred_cls = p_cls
-                        best_pred_idx = idx
-
-                if best_iou >= 0.20 and best_pred_idx != -1:
-                    matched_preds.add(best_pred_idx)
-                    pred_name = class_names.get(best_pred_cls, f"class_{best_pred_cls}")
-                    y_pred.append(pred_name)
-                else:
-                    # Falso Negativo: nenhuma detecção correspondente encontrada (ou detecção de fundo)
-                    # Para matriz clássica N x N entre classes de anomalia, mapeamos a detecção mais próxima ou classe majoritária
-                    if pred_boxes:
-                        y_pred.append(class_names.get(pred_boxes[0][0], gt_name))
-                    else:
-                        y_pred.append(gt_name)
+            # Pareamento rigoroso Ground Truth vs Predição via IoU >= 0.45
+            img_y_true, img_y_pred = self.match_detections_with_ground_truth(
+                gt_boxes=gt_boxes,
+                pred_boxes=pred_boxes,
+                class_names=class_names,
+                iou_threshold=0.45,
+                background_label="background",
+            )
+            y_true.extend(img_y_true)
+            y_pred.extend(img_y_pred)
 
         return y_true, y_pred, labels_list
+
+    @classmethod
+    def match_detections_with_ground_truth(
+        cls,
+        gt_boxes: List[Tuple[int, float, float, float, float]],
+        pred_boxes: List[Tuple[int, float, float, float, float, float]],
+        class_names: Dict[int, str],
+        iou_threshold: float = 0.45,
+        background_label: str = "background",
+    ) -> Tuple[List[str], List[str]]:
+        """
+        Realiza o pareamento determinístico e estatisticamente correto entre Ground Truth e Predições.
+        
+        Regras científicas:
+        - Predições são avaliadas por ordem decrescente de confiança (greedy matching).
+        - Uma predição é pareada ao GT com maior IoU desde que IoU >= iou_threshold.
+        - Caso A (True Positive ou Confusão): Se houver pareamento (IoU >= threshold):
+          y_true = classe_gt, y_pred = classe_pred. (Se classes forem iguais: TP; se distintas: confusão/erro de classificação).
+        - Caso B (False Negative): GT presente sem nenhuma predição válida associada:
+          y_true = classe_gt, y_pred = background_label (NUNCA assume acerto!).
+        - Caso D (False Positive): Predição presente sem nenhum GT correspondente:
+          y_true = background_label, y_pred = classe_pred.
+        """
+        y_true: List[str] = []
+        y_pred: List[str] = []
+
+        # Ordena predições por confiança decrescente
+        sorted_preds = sorted(enumerate(pred_boxes), key=lambda x: x[1][5], reverse=True)
+        
+        matched_gts = set()
+        matched_preds = set()
+
+        # 1. Matching das predições com GTs disponíveis
+        for p_idx, (p_cls, pcx, pcy, pw, ph, pconf) in sorted_preds:
+            best_iou = 0.0
+            best_gt_idx = -1
+
+            for gt_idx, (gt_cls, gcx, gcy, gw, gh) in enumerate(gt_boxes):
+                if gt_idx in matched_gts:
+                    continue
+                iou = cls._calculate_box_iou((gcx, gcy, gw, gh), (pcx, pcy, pw, ph))
+                if iou > best_iou:
+                    best_iou = iou
+                    best_gt_idx = gt_idx
+
+            if best_iou >= iou_threshold and best_gt_idx != -1:
+                matched_gts.add(best_gt_idx)
+                matched_preds.add(p_idx)
+                gt_cls = gt_boxes[best_gt_idx][0]
+                y_true.append(class_names.get(gt_cls, f"class_{gt_cls}"))
+                y_pred.append(class_names.get(p_cls, f"class_{p_cls}"))
+
+        # 2. Caso B: Falsos Negativos (GTs sem predição válida)
+        for gt_idx, (gt_cls, gcx, gcy, gw, gh) in enumerate(gt_boxes):
+            if gt_idx not in matched_gts:
+                y_true.append(class_names.get(gt_cls, f"class_{gt_cls}"))
+                y_pred.append(background_label)
+
+        # 3. Caso D: Falsos Positivos (Predições sem Ground Truth correspondente)
+        for p_idx, (p_cls, pcx, pcy, pw, ph, pconf) in sorted_preds:
+            if p_idx not in matched_preds:
+                y_true.append(background_label)
+                y_pred.append(class_names.get(p_cls, f"class_{p_cls}"))
+
+        return y_true, y_pred
 
     @staticmethod
     def _calculate_box_iou(box1: Tuple[float, float, float, float], box2: Tuple[float, float, float, float]) -> float:

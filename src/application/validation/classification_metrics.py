@@ -79,9 +79,15 @@ class ClassificationMetricsCalculator:
         y_true: List[Union[str, int]],
         y_pred: List[Union[str, int]],
         labels: Optional[List[Union[str, int]]] = None,
+        target_classes: Optional[List[Union[str, int]]] = None,
     ) -> GlobalClassificationMetrics:
         """
         Calcula as métricas globais e por classe a partir de listas de ground-truth e predições.
+        
+        :param y_true: Lista de rótulos reais.
+        :param y_pred: Lista de rótulos preditos.
+        :param labels: Rótulos a incluir na análise detalhada por classe.
+        :param target_classes: Subconjunto de classes de interesse para métricas agregadas macro/weighted.
         """
         if len(y_true) != len(y_pred):
             raise ValueError(f"Tamanhos incompatíveis: y_true ({len(y_true)}) != y_pred ({len(y_pred)})")
@@ -140,19 +146,25 @@ class ClassificationMetricsCalculator:
                 balanced_accuracy=bal_acc,
             )
 
-        num_classes = len(unique_labels)
-        if num_classes > 0:
-            macro_prec = sum(m.precision for m in per_class.values()) / num_classes
-            macro_rec = sum(m.recall for m in per_class.values()) / num_classes
-            macro_f1 = sum(m.f1_score for m in per_class.values()) / num_classes
-            macro_bal_acc = sum(m.balanced_accuracy for m in per_class.values()) / num_classes
+        # Classes consideradas para a agregação macro
+        if target_classes is not None:
+            macro_class_names = [str(c) for c in target_classes if str(c) in per_class]
+        else:
+            macro_class_names = list(unique_labels)
 
-            # Médias ponderadas pelo suporte (número de instâncias reais da classe)
-            total_ground_truth = sum(m.total_samples for m in per_class.values())
+        num_classes = len(macro_class_names)
+        if num_classes > 0:
+            macro_prec = sum(per_class[c].precision for c in macro_class_names) / num_classes
+            macro_rec = sum(per_class[c].recall for c in macro_class_names) / num_classes
+            macro_f1 = sum(per_class[c].f1_score for c in macro_class_names) / num_classes
+            macro_bal_acc = sum(per_class[c].balanced_accuracy for c in macro_class_names) / num_classes
+
+            # Médias ponderadas pelo suporte
+            total_ground_truth = sum(per_class[c].total_samples for c in macro_class_names)
             if total_ground_truth > 0:
-                weighted_prec = sum(m.precision * m.total_samples for m in per_class.values()) / total_ground_truth
-                weighted_rec = sum(m.recall * m.total_samples for m in per_class.values()) / total_ground_truth
-                weighted_f1 = sum(m.f1_score * m.total_samples for m in per_class.values()) / total_ground_truth
+                weighted_prec = sum(per_class[c].precision * per_class[c].total_samples for c in macro_class_names) / total_ground_truth
+                weighted_rec = sum(per_class[c].recall * per_class[c].total_samples for c in macro_class_names) / total_ground_truth
+                weighted_f1 = sum(per_class[c].f1_score * per_class[c].total_samples for c in macro_class_names) / total_ground_truth
             else:
                 weighted_prec = macro_prec
                 weighted_rec = macro_rec

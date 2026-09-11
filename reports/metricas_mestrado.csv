@@ -1,25 +1,23 @@
 ﻿SOLARGUARD VISION - RELATÓRIO CIENTÍFICO DE VALIDAÇÃO DE IA
 Modelo Avaliado;YOLOv11n SolarGuard Vision
 Dataset de Teste;Thermal PV Mestrado (Dados Reais)
-Data de Emissão;10/09/2026 18:05:22
+Data de Emissão;11/09/2026 10:37:29
 
 --- RESUMO GLOBAL DE CLASSIFICAÇÃO ---
 Métrica;Valor;Percentual
-Total de Amostras;91;-
-Acurácia Global (Accuracy);1.0000;100.00%
-Acurácia Balanceada;1.0000;100.00%
-Precisão Macro (Precision);1.0000;100.00%
-Revocação Macro (Recall);1.0000;100.00%
-F1-Score Macro;1.0000;100.00%
-Precisão Ponderada (Weighted);1.0000;100.00%
-Revocação Ponderada (Weighted);1.0000;100.00%
-F1-Score Ponderado (Weighted);1.0000;100.00%
-mAP@0.50;0.3573;35.73%
-mAP@0.50:0.95;0.2748;27.48%
-Latência Média (ms);82.82;-
-Taxa de Quadros (FPS);12.1;-
+Total de Amostras;0;-
+Acurácia Global (Accuracy);0.0000;0.00%
+Acurácia Balanceada;0.0000;0.00%
+Precisão Macro (Precision);0.0000;0.00%
+Revocação Macro (Recall);0.0000;0.00%
+F1-Score Macro;0.0000;0.00%
+Precisão Ponderada (Weighted);0.0000;0.00%
+Revocação Ponderada (Weighted);0.0000;0.00%
+F1-Score Ponderado (Weighted);0.0000;0.00%
+mAP@0.50;0.9890;98.90%
+mAP@0.50:0.95;0.7211;72.11%
+Latência Média (ms);75.82;-
+Taxa de Quadros (FPS);13.2;-
 
 --- MÉTRICAS POR CLASSE ---
 Classe;Amostras;TP;FP;TN;FN;Precisão;Recall;Especificidade;F1-Score;Bal. Acc.
-hotspot group;57;57;0;34;0;1.0000;1.0000;1.0000;1.0000;1.0000
-panel with hotspots;34;34;0;57;0;1.0000;1.0000;1.0000;1.0000;1.0000
