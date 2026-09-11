@@ -1,0 +1,30 @@
+{
+  "model_name": "best.pt",
+  "experiment": "revalidation_2026_v2",
+  "architecture": "YOLOv11n",
+  "framework": "Ultralytics / PyTorch",
+  "created_at": "2026-09-11T17:28:53.181129",
+  "sha256": "db5ed656c5db3bf92b0886a0def93d62c948d4cd01da7a9a5133a0bf5e5bf369",
+  "classes": {
+    "0": "hotspot group",
+    "1": "panel with hotspots"
+  },
+  "num_classes": 2,
+  "metrics": {
+    "map50": 0.0532,
+    "map50_95": 0.0223,
+    "precision": 0.0186,
+    "recall": 0.3497,
+    "f1": 0.0354,
+    "accuracy": 0.0,
+    "balanced_accuracy": 0.5,
+    "inference_time_ms": 98.21,
+    "fps": 10.2
+  },
+  "dataset_split": {
+    "train": "train/images",
+    "val": "valid/images",
+    "test": "test/images",
+    "isolation_rule": "Flight-based Group Split (sem vazamento de voo)"
+  }
+}

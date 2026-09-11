@@ -42,7 +42,9 @@ build/
 
 # Treinamentos e Runs do YOLO
 runs/
+experiments/*/runs/
 *.pt.backup
+*.cache
 
 # Arquivos do Sistema Operacional
 .DS_Store
