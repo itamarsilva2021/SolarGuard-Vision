@@ -87,8 +87,8 @@ def main():
 
     # Inicialização da interface gráfica PySide6
     try:
-        from PySide6.QtWidgets import QApplication, QMessageBox
-        from PySide6.QtCore import Qt
+        from PySide6.QtWidgets import QApplication
+        from src.presentation.main_window import MainWindow
 
         app = QApplication(sys.argv)
         app.setApplicationName(settings.app_name)
@@ -96,13 +96,9 @@ def main():
 
         logger.info("Módulo gráfico PySide6 inicializado com sucesso.")
 
-        # Em execução padrão sem GUI completa aberta nesta etapa, encerra graciosamente
-        # ou abre a janela caso invocada interativamente
-        if "--gui" in sys.argv:
-            sys.exit(app.exec())
-        else:
-            run_system_check()
-            sys.exit(0)
+        window = MainWindow(db)
+        window.show()
+        sys.exit(app.exec())
 
     except ImportError:
         logger.warning("PySide6 não disponível para modo gráfico desktop. Executando em modo headless.")

@@ -63,15 +63,14 @@ class AuditWorkerThread(QThread):
             self.error_signal.emit(str(ex))
 
 
-class DatasetAuditWindow(QMainWindow):
+class DatasetAuditWidget(QWidget):
     """
-    Janela desktop para auditoria de integridade e balanceamento de datasets de IA fotovoltaica.
+    Widget reutilizável para auditoria de integridade e balanceamento de datasets de IA fotovoltaica.
+    Pode ser acoplado como aba na MainWindow ou exibido de forma independente.
     """
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("SolarGuard Vision - Auditoria de Dataset YOLOv11")
-        self.resize(950, 720)
         self.current_result: Optional[DatasetAuditResult] = None
         self.worker_thread: Optional[AuditWorkerThread] = None
 
@@ -79,10 +78,8 @@ class DatasetAuditWindow(QMainWindow):
         self._apply_styles()
 
     def _setup_ui(self) -> None:
-        """Monta os componentes visuais da janela."""
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        """Monta os componentes visuais do widget de auditoria."""
+        main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(14)
 
@@ -369,3 +366,35 @@ class DatasetAuditWindow(QMainWindow):
                 )
             except Exception as ex:
                 QMessageBox.critical(self, "Erro", f"Falha ao gerar relatório PDF:\n{ex}")
+
+
+class DatasetAuditWindow(QMainWindow):
+    """
+    Janela desktop individual para auditoria de datasets YOLOv11 (wrapper para DatasetAuditWidget).
+    Mantém 100% de retrocompatibilidade com a API e testes legados.
+    """
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("SolarGuard Vision - Auditoria de Dataset YOLOv11")
+        self.resize(950, 720)
+        self.audit_widget = DatasetAuditWidget(self)
+        self.setCentralWidget(self.audit_widget)
+
+        # Referências diretas para retrocompatibilidade
+        self.path_input = self.audit_widget.path_input
+        self.audit_btn = self.audit_widget.audit_btn
+        self.table = self.audit_widget.table
+        self.pdf_btn = self.audit_widget.pdf_btn
+        self.card_images = self.audit_widget.card_images
+        self.card_annotations = self.audit_widget.card_annotations
+        self.card_orphans = self.audit_widget.card_orphans
+        self.card_balance = self.audit_widget.card_balance
+        self.progress_bar = self.audit_widget.progress_bar
+        self.status_footer_label = self.audit_widget.status_footer_label
+
+    def __getattr__(self, name: str):
+        # Fallback para qualquer outro atributo interno
+        if "audit_widget" in self.__dict__ and hasattr(self.audit_widget, name):
+            return getattr(self.audit_widget, name)
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")

@@ -96,6 +96,15 @@ class SettingsManager:
             logger.error(f"Erro ao salvar configurações em {self.config_file}: {e}", exc_info=True)
             return False
 
+    def update(self, **kwargs) -> AppSettings:
+        """Atualiza campos específicos das configurações e persiste no disco."""
+        cfg = self.get_settings()
+        for k, v in kwargs.items():
+            if hasattr(cfg, k):
+                setattr(cfg, k, v)
+        self.save_settings(cfg)
+        return cfg
+
     def reset_to_defaults(self) -> AppSettings:
         """Restaura todas as configurações para os padrões de fábrica."""
         defaults = AppSettings()
