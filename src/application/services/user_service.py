@@ -111,3 +111,34 @@ class UserService:
     def delete_user(self, user_id: str) -> bool:
         """Remove o cadastro de um usuário."""
         return self.user_repo.delete(user_id)
+
+    def ensure_default_admin(
+        self,
+        default_username: str = "admin",
+        default_password: str = "admin123",
+        default_name: str = "Administrador do Sistema",
+    ) -> User:
+        """
+        Garante a existência de ao menos um administrador para acesso inicial ao sistema.
+        Se nenhum usuário existir no banco de dados, cria o usuário padrão com hash PBKDF2 seguro.
+        """
+        existing = self.user_repo.get_by_username(default_username)
+        if existing:
+            return existing
+
+        all_users = self.user_repo.list_all()
+        if all_users:
+            # Já existem outros usuários cadastrados, não sobrescreve nem cria
+            return all_users[0]
+
+        logger.info(f"Nenhum usuário encontrado no banco de dados. Criando administrador padrão '{default_username}'...")
+        res = self.create_user(
+            username=default_username,
+            password=default_password,
+            full_name=default_name,
+            role=UserRole.ADMIN,
+            email="admin@solarguard.vision",
+        )
+        if res.is_success:
+            return res.value
+        raise RuntimeError(f"Falha ao criar usuário padrão inicial: {res.error}")

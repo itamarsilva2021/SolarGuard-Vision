@@ -85,9 +85,20 @@ def main():
     lic_info = lic_mgr.check_current_license()
     logger.info(f"Status da Licença: {lic_info.license_type.display_name} - {lic_info.status_message}")
 
+    # Inicialização da infraestrutura de autenticação e sessão
+    from src.infrastructure.database.repositories.sqlite_user_repository import SqliteUserRepository
+    from src.application.services.user_service import UserService
+    from src.application.services.session_service import SessionManager
+
+    user_repo = SqliteUserRepository(db)
+    user_svc = UserService(user_repo)
+    user_svc.ensure_default_admin()
+    session_mgr = SessionManager(user_svc)
+
     # Inicialização da interface gráfica PySide6
     try:
-        from PySide6.QtWidgets import QApplication
+        from PySide6.QtWidgets import QApplication, QDialog
+        from src.presentation.login_dialog import LoginDialog
         from src.presentation.main_window import MainWindow
 
         app = QApplication(sys.argv)
@@ -96,7 +107,13 @@ def main():
 
         logger.info("Módulo gráfico PySide6 inicializado com sucesso.")
 
-        window = MainWindow(db)
+        # Bloqueio de acesso sem autenticação: tela de login obrigatória
+        login_dlg = LoginDialog(session_mgr)
+        if login_dlg.exec() != QDialog.Accepted or not session_mgr.is_authenticated():
+            logger.info("Autenticação não realizada ou cancelada pelo usuário. Encerrando aplicação.")
+            sys.exit(0)
+
+        window = MainWindow(db, session_manager=session_mgr)
         window.show()
         sys.exit(app.exec())
 

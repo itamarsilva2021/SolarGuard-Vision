@@ -38,6 +38,7 @@ try:
         QFormLayout,
         QGroupBox,
         QStatusBar,
+        QDialog,
     )
     from PySide6.QtCore import Qt, QUrl
     from PySide6.QtGui import QFont, QIcon, QColor, QPixmap, QDesktopServices
@@ -46,6 +47,7 @@ except ImportError:
     HAS_PYSIDE6 = False
     QMainWindow = object
     QWidget = object
+    QDialog = object
 
 from src.core.config import settings
 from src.core.logger import get_logger
@@ -57,6 +59,9 @@ from src.infrastructure.database.repositories.sqlite_inspection_repository impor
 from src.infrastructure.database.repositories.sqlite_thermal_anomaly_repository import SqliteThermalAnomalyRepository
 from src.infrastructure.database.repositories.sqlite_thermal_image_repository import SqliteThermalImageRepository
 from src.infrastructure.database.repositories.sqlite_report_repository import SqliteReportRepository
+from src.infrastructure.database.repositories.sqlite_user_repository import SqliteUserRepository
+from src.application.services.user_service import UserService
+from src.application.services.session_service import SessionManager
 from src.presentation.dataset_audit_window import DatasetAuditWidget
 
 logger = get_logger("MainWindow")
@@ -719,7 +724,12 @@ class MainWindow(QMainWindow):
     Conecta Dashboard, Inspeções, Relatórios, Auditoria de Dataset, Configurações e Licenciamento.
     """
 
-    def __init__(self, db: Optional[DatabaseManager] = None, db_manager: Optional[DatabaseManager] = None) -> None:
+    def __init__(
+        self,
+        db: Optional[DatabaseManager] = None,
+        db_manager: Optional[DatabaseManager] = None,
+        session_manager: Optional[SessionManager] = None,
+    ) -> None:
         super().__init__()
         self.setWindowTitle(f"{settings.app_name} - {settings.app_version} (Research Edition)")
         self.resize(1200, 780)
@@ -728,6 +738,16 @@ class MainWindow(QMainWindow):
         # Inicialização da persistência
         self.db = db or db_manager or DatabaseManager()
         self.db.initialize_schema()
+
+        # Inicialização do controle de sessão
+        if session_manager is not None:
+            self.session_manager = session_manager
+        else:
+            user_repo = SqliteUserRepository(self.db)
+            user_svc = UserService(user_repo)
+            admin_user = user_svc.ensure_default_admin()
+            self.session_manager = SessionManager(user_svc)
+            self.session_manager.login(admin_user.username, "admin123")
 
         self._setup_ui()
         self.stacked = self.stack
@@ -811,6 +831,51 @@ class MainWindow(QMainWindow):
 
         sb_layout.addStretch()
 
+        # Card de Identificação de Usuário / Sessão Ativa
+        self.user_card = QFrame()
+        self.user_card.setStyleSheet("""
+            QFrame {
+                background-color: #111D3B;
+                border: 1px solid #1C2541;
+                border-radius: 8px;
+            }
+        """)
+        uc_layout = QVBoxLayout(self.user_card)
+        uc_layout.setContentsMargins(10, 8, 10, 8)
+        uc_layout.setSpacing(4)
+
+        self.user_name_lbl = QLabel()
+        self.user_name_lbl.setFont(QFont("Segoe UI", 10, QFont.Bold))
+        self.user_name_lbl.setStyleSheet("color: #F8FAFC;")
+
+        self.user_role_lbl = QLabel()
+        self.user_role_lbl.setStyleSheet("color: #38BDF8; font-size: 10px;")
+
+        self.logout_btn = QPushButton("🚪 Sair (Logout)")
+        self.logout_btn.setFixedHeight(26)
+        self.logout_btn.setCursor(Qt.PointingHandCursor)
+        self.logout_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #1C2541;
+                color: #EF4444;
+                border: 1px solid #EF4444;
+                border-radius: 4px;
+                font-size: 11px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #EF4444;
+                color: #FFFFFF;
+            }
+        """)
+        self.logout_btn.clicked.connect(self.handle_logout)
+
+        uc_layout.addWidget(self.user_name_lbl)
+        uc_layout.addWidget(self.user_role_lbl)
+        uc_layout.addWidget(self.logout_btn)
+        sb_layout.addWidget(self.user_card)
+        self._update_user_display()
+
         # Versão na Sidebar
         ver_lbl = QLabel(f"Versão {settings.app_version}\nBuild IEC TS 62446-3")
         ver_lbl.setStyleSheet("color: #475569; font-size: 10px; text-align: center;")
@@ -853,11 +918,66 @@ class MainWindow(QMainWindow):
             f"Banco de Dados: Conectado (SQLite WAL)  |  Licença: {lic_info.license_type.display_name} ({lic_info.status_message})  |  Sistema Operacional: Windows 64-bit"
         )
 
-        # Inicia com o Dashboard selecionado
-        self.switch_page(0)
+        # Inicia com o Dashboard selecionado se autenticado
+        if self.session_manager.is_authenticated():
+            self.switch_page(0)
+
+    def _update_user_display(self) -> None:
+        """Atualiza os rótulos de usuário ativo e papel no card da barra lateral."""
+        user = self.session_manager.current_user
+        if user:
+            self.user_name_lbl.setText(f"👤 {user.full_name}")
+            role_text = user.role.value if hasattr(user.role, "value") else str(user.role)
+            self.user_role_lbl.setText(f"Perfil: {role_text.capitalize()}")
+        else:
+            self.user_name_lbl.setText("👤 Desconectado")
+            self.user_role_lbl.setText("Perfil: Não autenticado")
+
+    def check_access(self) -> bool:
+        """
+        Valida se a sessão atual está autenticada.
+        Se não estiver, bloqueia o acesso, oculta a tela principal e abre o diálogo de login.
+        """
+        if not self.session_manager.is_authenticated():
+            self.hide()
+            from src.presentation.login_dialog import LoginDialog
+            login_dlg = LoginDialog(self.session_manager)
+            if login_dlg.exec() == QDialog.Accepted and self.session_manager.is_authenticated():
+                self._update_user_display()
+                self.show()
+                return True
+            else:
+                self.close()
+                return False
+        return True
+
+    def handle_logout(self) -> None:
+        """Executa logout seguro da sessão e reabre a tela de autenticação."""
+        reply = QMessageBox.question(
+            self,
+            "Confirmar Saída",
+            "Deseja realmente encerrar a sessão de trabalho?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply == QMessageBox.Yes:
+            self.session_manager.logout()
+            self._update_user_display()
+            self.hide()
+            from src.presentation.login_dialog import LoginDialog
+            login_dlg = LoginDialog(self.session_manager)
+            if login_dlg.exec() == QDialog.Accepted and self.session_manager.is_authenticated():
+                self._update_user_display()
+                self.show()
+                self.switch_page(0)
+            else:
+                self.close()
 
     def switch_page(self, index: int) -> None:
         """Alterna a página visível e atualiza o estado dos botões da sidebar."""
+        if not self.check_access():
+            return
+
         self.stack.setCurrentIndex(index)
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
