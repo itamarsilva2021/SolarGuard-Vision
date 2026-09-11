@@ -5,14 +5,9 @@
   "exported_at": "2026-09-11T11:34:33.681132",
   "sha256": "c97fd107607cc6541c703b0010d390083b8912301ff43f12cac2f17a56e42b09",
   "classes": {
-    "0": "hotspot",
-    "1": "disconnected_module",
-    "2": "pid",
-    "3": "soiling",
-    "4": "shading",
-    "5": "healthy_module"
+    "0": "pv_panel"
   },
-  "num_classes": 6,
+  "num_classes": 1,
   "metrics": {
     "map50": 0.3573,
     "map50_95": 0.2748,
@@ -21,14 +16,23 @@
     "fitness": 0.2831,
     "inference_time_ms": 0.0,
     "evaluated_at": "2026-09-11T11:34:33.634090",
-    "classes": {}
+    "classes": {
+      "pv_panel": {
+        "precision": 0.4578,
+        "recall": 0.684,
+        "map50": 0.3573,
+        "map50_95": 0.2748
+      }
+    }
   },
   "extra_metadata": {
+    "original_training_dataset": "Thermal PV Panel Detection Dataset for UAV Inspection",
+    "original_target": "Detecção e segmentação de geometria de módulos fotovoltaicos (pv_panel)",
+    "audit_note": "Auditado em 11/09/2026: classes corrigidas de 6 para 1 conforme weights reais do arquivo best.pt.",
     "dataset": "datasets/thermal_pv_mestrado",
     "experiment": "Etapa 19 - Avaliação Experimental Real de Mestrado",
     "epochs": 10,
     "batch_size": 4,
-    "accuracy": 1.0,
     "training_time_s": 289.77
   }
 }
