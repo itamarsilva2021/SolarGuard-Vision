@@ -1,11 +1,14 @@
 # SolarGuard Vision (Research Edition v1.0)
 
+[![CI/CD Pipeline](https://github.com/itamarsilva2021/SolarGuard-Vision/actions/workflows/ci.yml/badge.svg)](https://github.com/itamarsilva2021/SolarGuard-Vision/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/Tests-240%20passed-brightgreen?logo=pytest)](https://github.com/itamarsilva2021/SolarGuard-Vision)
+[![Coverage](https://img.shields.io/badge/Coverage-87%25-brightgreen?logo=codecov)](https://github.com/itamarsilva2021/SolarGuard-Vision)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue.svg)](https://mypy-lang.org/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.14-ee4c2c.svg)](https://pytorch.org/)
-[![YOLOv11](https://img.shields.io/badge/YOLOv11-Ultralytics-00ffff.svg)](https://docs.ultralytics.com/)
-[![Qt PySide6](https://img.shields.io/badge/GUI-PySide6%20Qt6-41cd52.svg)](https://wiki.qt.io/Qt_for_Python)
+[![Licensing](https://img.shields.io/badge/Licensing-Ed25519%20RFC%208032-informational)](docs/LICENSING_ARCHITECTURE.md)
 [![Norma](https://img.shields.io/badge/Norma-IEC%20TS%2062446--3-orange.svg)](https://webstore.iec.ch/publication/28628)
-[![Tests](https://img.shields.io/badge/Tests-207%20passed-brightgreen.svg)]()
 
 > **Plataforma Científica e Industrial Autônoma de Diagnóstico Termográfico Aéreo para Usinas Solares Fotovoltaicas.**
 
@@ -18,7 +21,8 @@ O **SolarGuard Vision** é um sistema completo desenvolvido para o diagnóstico 
 - **Detecção de Falhas com Visão Computacional Profunda:** Redes neurais de última geração **YOLOv11**;
 - **Classificação Normativa de Severidade:** Diagnóstico automatizado conforme a **IEC TS 62446-3:2017**;
 - **Mapeamento Topológico de Precisão:** Vínculo geométrico entre cada falha e o módulo físico (*String*, Linha e Coluna da usina);
-- **Geração de Laudos Periciais Automatizados:** Exportação em PDF pericial, planilhas Excel (.xlsx) e mapas geoespaciais interativos (Folium).
+- **Geração de Laudos Periciais Automatizados:** Exportação em PDF pericial, planilhas Excel (.xlsx) e mapas geoespaciais interativos (Folium);
+- **Segurança Criptográfica Assimétrica:** Licenciamento baseado em curvas elípticas **Ed25519** com vinculação física por Hardware ID (HWID).
 
 ---
 
@@ -35,36 +39,42 @@ SolarGuard Vision/
 │   ├── infrastructure/        # Motores de Radiometria, YOLOv11, SQLite WAL, DJI e GIS
 │   └── presentation/          # Interface Gráfica Reativa em PySide6 (Qt)
 ├── docs/                      # Compêndio Documental Completo para Dissertação
-├── tests/                     # 207 Testes Automatizados (100% de Aprovação)
+├── tests/                     # 240 Testes Automatizados (100% de Aprovação)
+├── .github/workflows/         # Pipeline de CI/CD (Ruff, MyPy, Pytest, Coverage)
+├── uv.lock                    # Ambiente determinístico e reproduzível
 └── packaging/                 # Scripts de Empacotamento para Windows
 ```
 
 ---
 
-## 🚀 Instalação Rápida
+## 🚀 Instalação Rápida e Reproduzível (`uv`)
 
-### Requisitos:
-- Windows 10 ou 11 (64 bits)
-- Python 3.12+
-- Git
+O projeto utiliza o gerenciador de alta performance **`uv`** com **`uv.lock`**, garantindo 100% de reprodutibilidade e separação estrita entre ambientes.
 
-### Passo a Passo:
+### Instalação com `uv` (Recomendado):
 ```powershell
-# 1. Clonar o projeto
-git clone https://github.com/itamar/solarguard-vision.git
-cd solarguard-vision
+# 1. Clonar o repositório
+git clone https://github.com/itamarsilva2021/SolarGuard-Vision.git
+cd SolarGuard-Vision
 
-# 2. Criar e ativar o ambiente virtual
+# 2. Instalação Enxuta de Produção (Apenas Runtime):
+uv sync --no-dev
+
+# Ou para Ambiente Completo de Desenvolvimento (Testes + Linter):
+uv sync --all-groups
+
+# 3. Executar o sistema:
+uv run python main.py
+
+# 4. Executar a suíte de testes (240 testes):
+uv run pytest -v
+```
+
+### Instalação Tradicional (`pip`):
+```powershell
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-
-# 3. Instalar dependências
-pip install -r requirements.txt
-
-# 4. Executar autodiagnóstico
-python main.py --check-system
-
-# 5. Iniciar a aplicação
+.venv\Scripts\activate
+pip install -e .
 python main.py
 ```
 

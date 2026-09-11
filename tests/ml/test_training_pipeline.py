@@ -96,7 +96,7 @@ class TestYoloDatasetLoader:
             img_p = raw_imgs / f"frame_{i:03d}.jpg"
             lbl_p = raw_lbls / f"frame_{i:03d}.txt"
             cv2.imwrite(str(img_p), np.zeros((50, 50, 3), dtype=np.uint8))
-            lbl_p.write_text(f"0 0.5 0.5 0.2 0.2\n")
+            lbl_p.write_text("0 0.5 0.5 0.2 0.2\n")
 
         loader.split_dataset(raw_imgs, raw_lbls, target_dir, train_ratio=0.8, val_ratio=0.2)
 

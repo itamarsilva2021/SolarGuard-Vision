@@ -60,25 +60,35 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-### 3.3. Instalação das Dependências
-Instale todos os pacotes científicos homologados:
+### 3.3. Instalação e Reprodutibilidade com `uv` (Recomendado)
+O SolarGuard Vision adota o gerenciador de dependências **`uv`** com lockfile determinístico **`uv.lock`**, permitindo instalar apenas os grupos necessários para cada finalidade:
 
 ```powershell
-# Instalação das dependências principais
+# Opção A: Instalação Enxuta de Produção (Apenas Runtime)
+# Instala estritamente as dependências necessárias para operação desktop e inferência
+uv sync --no-dev
+
+# Opção B: Instalação para Treinamento e Experimentação Científica
+uv sync --group training
+
+# Opção C: Instalação Completa de Desenvolvimento e Testes (CI/CD)
+# Inclui pytest, pytest-cov, ruff, mypy e pyinstaller
+uv sync --all-groups
+```
+
+### 3.4. Instalação Tradicional com `pip`
+Caso prefira o ecossistema padrão:
+```powershell
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -e .                 # Apenas produção
+pip install -e ".[training,dev]" # Desenvolvimento completo
 ```
 
-*Nota: Para aceleração gráfica via GPU NVIDIA CUDA, instale a versão com suporte a CUDA do PyTorch:*
-```powershell
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-```
-
-### 3.4. Diagnóstico de Prontidão do Sistema
+### 3.5. Diagnóstico de Prontidão do Sistema
 Execute o comando de auto-diagnóstico do SolarGuard Vision:
 
 ```powershell
-.venv\Scripts\python.exe main.py --check-system
+uv run python main.py --check-system
 ```
 
 Saída esperada:
@@ -94,11 +104,11 @@ Saída esperada:
 =================================================================
 ```
 
-### 3.5. Execução dos Testes Automatizados
+### 3.6. Execução dos Testes Automatizados
 Para certificar a integridade de todas as camadas arquiteturais:
 
 ```powershell
-.venv\Scripts\python.exe -m pytest -v
+uv run pytest -v
 ```
 
 ---

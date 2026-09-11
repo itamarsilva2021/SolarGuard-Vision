@@ -3,7 +3,7 @@ Serviço de Aplicação para Cálculo de KPIs, Histórico e Orquestração do Da
 Cruza dados de Usinas, Inspeções e Falhas Térmicas e aciona a geração de gráficos com Matplotlib.
 """
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 from src.core.result import Result, Success, Failure

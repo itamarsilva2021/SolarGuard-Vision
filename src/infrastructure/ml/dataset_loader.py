@@ -53,9 +53,9 @@ class YoloDatasetLoader:
         yaml_path.parent.mkdir(parents=True, exist_ok=True)
 
         lines = [
-            f"# ==============================================================================",
-            f"# SolarGuard Vision - Configuração do Dataset YOLOv11",
-            f"# ==============================================================================",
+            "# ==============================================================================",
+            "# SolarGuard Vision - Configuração do Dataset YOLOv11",
+            "# ==============================================================================",
             f"path: {dataset_dir.as_posix()}",
             f"train: {train_rel_path}",
             f"val: {val_rel_path}",

@@ -52,6 +52,20 @@
     "local_generation": "STRICTLY_PROHIBITED",
     "invalid_license_policy": "STRICT_EXECUTION_BLOCK"
   },
+  "environment": {
+    "package_manager": "uv",
+    "lockfile": "uv.lock",
+    "dependency_groups": {
+      "runtime": "Production dependencies (UI, AI Inference, Radiometry, GIS, Security)",
+      "training": "Model fine-tuning and benchmark utilities",
+      "dev": "Testing, linting (Ruff), type checking (MyPy), and packaging"
+    }
+  },
+  "ci_cd": {
+    "platform": "GitHub Actions",
+    "workflow": ".github/workflows/ci.yml",
+    "checks": ["Ruff Linter", "MyPy Type Checker", "Pytest (240 tests)", "Coverage (87%)"]
+  },
   "verification": {
     "total_tests": 240,
     "passed_tests": 240,

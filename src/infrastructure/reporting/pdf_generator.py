@@ -344,8 +344,8 @@ class PdfReportGenerator:
                 [
                     Paragraph(f"<b>Latitude:</b> {lat_str}", self.styles["TableCell"]),
                     Paragraph(f"<b>Longitude:</b> {lon_str}", self.styles["TableCell"]),
-                    Paragraph(f"<b>Norma:</b> IEC TS 62446-3", self.styles["TableCell"]),
-                    Paragraph(f"<b>Status:</b> Intervenção Recomendada", self.styles["TableCell"]),
+                    Paragraph("<b>Norma:</b> IEC TS 62446-3", self.styles["TableCell"]),
+                    Paragraph("<b>Status:</b> Intervenção Recomendada", self.styles["TableCell"]),
                 ]
             ]
             metrics_table = Table(metrics_data, colWidths=[width * 0.25] * 4)

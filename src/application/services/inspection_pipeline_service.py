@@ -190,7 +190,7 @@ class InspectionPipelineService:
                 relative_humidity=request.relative_humidity,
                 distance_meters=request.distance_meters,
                 reference_temp_celsius=request.ambient_temp_celsius + 15.0,
-                notes=f"Processado automaticamente via pipeline autônomo SolarGuard Vision.",
+                notes="Processado automaticamente via pipeline autônomo SolarGuard Vision.",
             )
             persist_res = self.persistence_service.persist_inference(persist_req)
             if persist_res.is_success:
