@@ -18,6 +18,12 @@
     "persistence": "SQLite 3 (WAL mode + Foreign Keys)",
     "reporting": "ReportLab PDF Engine + OpenXML Excel Exporter"
   },
+  "official_model": {
+    "weights": "models/best.pt",
+    "manifest": "models/best.json",
+    "sha256": "c97fd107607cc6541c703b0010d390083b8912301ff43f12cac2f17a56e42b09",
+    "architecture": "YOLOv11n-ThermalPV"
+  },
   "experimental_benchmark": {
     "experiment_id": "7c4c3bb5-7580-4dd6-a83f-0c03d77b2cc2",
     "total_images": 52,

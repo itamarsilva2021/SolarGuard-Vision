@@ -3,8 +3,10 @@ Motor de Detecção e Inferência YOLOv11 para Anomalias Térmicas Fotovoltaicas
 Implementa a interface IAnomalyDetector com renderização de bounding boxes e extração de recortes.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional, List, Union, Tuple
+from typing import Optional, List, Union, Tuple, TYPE_CHECKING
 import cv2
 import numpy as np
 
@@ -14,8 +16,10 @@ from src.domain.enums.anomaly_type import AnomalyType
 from src.domain.enums.severity_level import SeverityLevel
 from src.domain.value_objects.bounding_box import BoundingBox
 from src.infrastructure.detection.model_loader import ModelLoader
-from src.infrastructure.detection.defect_classifier import DefectClassifier
 from src.core.logger import get_logger
+
+if TYPE_CHECKING:
+    from src.infrastructure.detection.defect_classifier import DefectClassifier
 
 logger = get_logger("Detector")
 
@@ -53,7 +57,11 @@ class Detector(IAnomalyDetector):
         self.model_path = model_path
         self.confidence_threshold = confidence_threshold
         self.iou_threshold = iou_threshold
-        self.classifier = defect_classifier or DefectClassifier()
+        if defect_classifier is None:
+            from src.infrastructure.detection.defect_classifier import DefectClassifier
+            self.classifier = DefectClassifier()
+        else:
+            self.classifier = defect_classifier
 
     def detect(
         self,
