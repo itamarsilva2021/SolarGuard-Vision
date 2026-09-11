@@ -18,6 +18,7 @@ dependencies = [
     "pandas>=2.2.0",
     "folium>=0.16.0",
     "pydantic>=2.6.0",
+    "cryptography>=42.0.0",
 ]
 
 [tool.pytest.ini_options]

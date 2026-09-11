@@ -14,6 +14,7 @@ from src.infrastructure.database.connection import DatabaseManager
 from src.infrastructure.database.repositories.sqlite_user_repository import SqliteUserRepository
 from src.infrastructure.security.password_hasher import PasswordHasher
 from src.infrastructure.security.license_manager import LicenseManager, LicenseType
+from src.infrastructure.security.license_issuer import LicenseIssuer
 from src.infrastructure.config.settings_manager import SettingsManager, AppSettings
 from src.infrastructure.storage.backup_service import BackupService
 from src.infrastructure.updater.update_manager import UpdateManager
@@ -168,12 +169,13 @@ class TestLicenseManager:
     def test_hardware_fingerprint_and_license_generation(self, tmp_path: Path):
         lic_file = tmp_path / "license.key"
         lic_mgr = LicenseManager(license_file=lic_file)
+        issuer = LicenseIssuer()
 
         hwid = lic_mgr.get_current_machine_fingerprint()
         assert len(hwid) > 10
 
-        # Gerar chave legítima para a máquina local
-        key = lic_mgr.generate_license_key(
+        # Gerar chave legítima via emissor com Ed25519 para a máquina local
+        key = issuer.issue_license(
             client_name="EletroSolar Corp",
             license_type=LicenseType.PROFESSIONAL,
             machine_fingerprint=hwid,
@@ -192,8 +194,9 @@ class TestLicenseManager:
 
     def test_tamper_detection_and_invalid_signature(self, tmp_path: Path):
         lic_mgr = LicenseManager(license_file=tmp_path / "license.key")
+        issuer = LicenseIssuer()
         hwid = lic_mgr.get_current_machine_fingerprint()
-        legit_key = lic_mgr.generate_license_key("Cliente", LicenseType.TRIAL, hwid)
+        legit_key = issuer.issue_license("Cliente", LicenseType.TRIAL, hwid)
 
         # Adulterar assinatura
         tampered_key = legit_key[:-5] + "XXXXX"
@@ -203,8 +206,9 @@ class TestLicenseManager:
 
     def test_machine_mismatch(self, tmp_path: Path):
         lic_mgr = LicenseManager(license_file=tmp_path / "license.key")
+        issuer = LicenseIssuer()
         # Gerar chave para outro HWID
-        key_other_machine = lic_mgr.generate_license_key("Cliente", LicenseType.PROFESSIONAL, "OUTRO_HWID_12345")
+        key_other_machine = issuer.issue_license("Cliente", LicenseType.PROFESSIONAL, "OUTRO_HWID_12345")
         info = lic_mgr.validate_license_key(key_other_machine)
         assert info.is_valid is False
         assert "outro computador" in info.status_message.lower()

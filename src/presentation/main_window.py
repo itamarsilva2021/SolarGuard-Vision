@@ -729,6 +729,7 @@ class MainWindow(QMainWindow):
         db: Optional[DatabaseManager] = None,
         db_manager: Optional[DatabaseManager] = None,
         session_manager: Optional[SessionManager] = None,
+        lic_mgr: Optional[LicenseManager] = None,
     ) -> None:
         super().__init__()
         self.setWindowTitle(f"{settings.app_name} - {settings.app_version} (Research Edition)")
@@ -738,6 +739,9 @@ class MainWindow(QMainWindow):
         # Inicialização da persistência
         self.db = db or db_manager or DatabaseManager()
         self.db.initialize_schema()
+
+        # Inicialização do controle de licença
+        self.lic_mgr = lic_mgr or LicenseManager()
 
         # Inicialização do controle de sessão
         if session_manager is not None:
@@ -895,7 +899,7 @@ class MainWindow(QMainWindow):
         self.view_reports = ReportsView(self.db)
         self.view_dataset_audit = DatasetAuditWidget()
         self.view_settings = SettingsView()
-        self.view_license = LicenseView()
+        self.view_license = LicenseView(self.lic_mgr)
 
         self.stack.addWidget(self.view_dashboard)       # index 0
         self.stack.addWidget(self.view_inspections)     # index 1
@@ -912,15 +916,21 @@ class MainWindow(QMainWindow):
         status_bar = QStatusBar(self)
         status_bar.setStyleSheet("background-color: #0B132B; border-top: 1px solid #1C2541; color: #64748B; font-size: 11px;")
         self.setStatusBar(status_bar)
+        self.refresh_status_bar()
 
-        lic_info = LicenseManager().check_current_license()
-        status_bar.showMessage(
+        # Inicia com o Dashboard selecionado se autenticado e licenciado, ou Licenciamento se inválida
+        if self.session_manager.is_authenticated():
+            if self.lic_mgr.check_current_license().is_valid:
+                self.switch_page(0)
+            else:
+                self.switch_page(5)
+
+    def refresh_status_bar(self) -> None:
+        """Atualiza mensagem da barra de status com informações de licença."""
+        lic_info = self.lic_mgr.check_current_license()
+        self.statusBar().showMessage(
             f"Banco de Dados: Conectado (SQLite WAL)  |  Licença: {lic_info.license_type.display_name} ({lic_info.status_message})  |  Sistema Operacional: Windows 64-bit"
         )
-
-        # Inicia com o Dashboard selecionado se autenticado
-        if self.session_manager.is_authenticated():
-            self.switch_page(0)
 
     def _update_user_display(self) -> None:
         """Atualiza os rótulos de usuário ativo e papel no card da barra lateral."""
@@ -951,6 +961,26 @@ class MainWindow(QMainWindow):
                 return False
         return True
 
+    def check_license_guard(self, target_index: int) -> bool:
+        """
+        Garante que a licença do software seja válida antes de acessar áreas operacionais.
+        Se a licença for inválida, bloqueia o acesso e força exibição da tela de licenciamento.
+        """
+        if target_index == 5:
+            return True
+
+        lic = self.lic_mgr.check_current_license()
+        if not lic.is_valid:
+            QMessageBox.warning(
+                self,
+                "Acesso Bloqueado - Licença Obrigatória",
+                f"O uso dos recursos operacionais está bloqueado:\n\n{lic.status_message}\n\n"
+                "Por favor, ative uma chave de licença válida assinada digitalmente com Ed25519.",
+            )
+            self.switch_page(5)
+            return False
+        return True
+
     def handle_logout(self) -> None:
         """Executa logout seguro da sessão e reabre a tela de autenticação."""
         reply = QMessageBox.question(
@@ -978,6 +1008,9 @@ class MainWindow(QMainWindow):
         if not self.check_access():
             return
 
+        if not self.check_license_guard(index):
+            return
+
         self.stack.setCurrentIndex(index)
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
@@ -992,3 +1025,4 @@ class MainWindow(QMainWindow):
             self.view_reports.refresh_data()
         elif index == 5:
             self.view_license.refresh_status()
+            self.refresh_status_bar()

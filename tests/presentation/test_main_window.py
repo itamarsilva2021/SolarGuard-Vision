@@ -65,11 +65,30 @@ def test_main_window_instantiation(qapp, memory_db):
     window.close()
 
 
-def test_main_window_navigation(qapp, memory_db):
-    """Testa a troca de abas da barra lateral (Sidebar) e atualização visual."""
+@pytest.fixture
+def mock_valid_license(monkeypatch):
+    """Garante que a licença seja considerada válida para testes de navegação geral."""
+    from datetime import datetime, timezone
+    from src.infrastructure.security.license_manager import LicenseInfo, LicenseType
+    fake_info = LicenseInfo(
+        client_name="Test Enterprise",
+        license_type=LicenseType.ENTERPRISE,
+        machine_fingerprint="MOCK-HWID-12345",
+        issued_at=datetime.now(timezone.utc),
+        expires_at=None,
+        max_plants=100,
+        is_valid=True,
+        status_message="Licença Ativa (Teste)",
+    )
+    monkeypatch.setattr(LicenseManager, "check_current_license", lambda self: fake_info)
+    return fake_info
+
+
+def test_main_window_navigation(qapp, memory_db, mock_valid_license):
+    """Testa a troca de abas da barra lateral (Sidebar) e atualização visual com licença ativa."""
     window = MainWindow(db_manager=memory_db)
 
-    # Inicialmente na primeira aba (Dashboard)
+    # Inicialmente na primeira aba (Dashboard) quando licença está ativa
     assert window.stacked.currentIndex() == 0
 
     # Navegar por cada uma das abas
@@ -82,6 +101,39 @@ def test_main_window_navigation(qapp, memory_db):
         for j in range(6):
             if j != i:
                 assert window.nav_buttons[j].property("active") == "false"
+
+    window.close()
+
+
+def test_main_window_license_blocking_when_invalid(qapp, memory_db, monkeypatch):
+    """Testa que MainWindow bloqueia navegação para abas de trabalho quando a licença for inválida."""
+    from datetime import datetime, timezone
+    from src.infrastructure.security.license_manager import LicenseInfo, LicenseType
+    invalid_info = LicenseInfo(
+        client_name="",
+        license_type=LicenseType.TRIAL,
+        machine_fingerprint="MOCK-HWID-INVALID",
+        issued_at=datetime.now(timezone.utc),
+        expires_at=None,
+        max_plants=0,
+        is_valid=False,
+        status_message="Licença expirada ou inválida",
+    )
+    monkeypatch.setattr(LicenseManager, "check_current_license", lambda self: invalid_info)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args, **kwargs: QMessageBox.StandardButton.Ok)
+
+    window = MainWindow(db_manager=memory_db)
+
+    # Bloqueio inicial: redireciona automaticamente para aba 5 (Licença)
+    assert window.stacked.currentIndex() == 5
+
+    # Tenta navegar para Dashboard (aba 0) -> deve ser bloqueado e permanecer em 5
+    window.switch_page(0)
+    assert window.stacked.currentIndex() == 5
+
+    # Tenta navegar para Inspeções (aba 1) -> deve ser bloqueado e permanecer em 5
+    window.switch_page(1)
+    assert window.stacked.currentIndex() == 5
 
     window.close()
 

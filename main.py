@@ -107,13 +107,23 @@ def main():
 
         logger.info("Módulo gráfico PySide6 inicializado com sucesso.")
 
-        # Bloqueio de acesso sem autenticação: tela de login obrigatória
+        # 1. Bloqueio estrito de licença: licença inválida => bloqueia uso
+        if not lic_info.is_valid:
+            logger.warning(f"Licença inválida ou ausente: {lic_info.status_message}")
+            from src.presentation.license_dialog import LicenseActivationDialog
+            lic_dlg = LicenseActivationDialog(lic_mgr)
+            if lic_dlg.exec() != QDialog.Accepted or not lic_mgr.check_current_license().is_valid:
+                logger.error("Ativação de licença rejeitada ou cancelada. O uso do software foi bloqueado.")
+                sys.exit(1)
+            lic_info = lic_mgr.check_current_license()
+
+        # 2. Bloqueio de acesso sem autenticação: tela de login obrigatória
         login_dlg = LoginDialog(session_mgr)
         if login_dlg.exec() != QDialog.Accepted or not session_mgr.is_authenticated():
             logger.info("Autenticação não realizada ou cancelada pelo usuário. Encerrando aplicação.")
             sys.exit(0)
 
-        window = MainWindow(db, session_manager=session_mgr)
+        window = MainWindow(db, session_manager=session_mgr, lic_mgr=lic_mgr)
         window.show()
         sys.exit(app.exec())
 
