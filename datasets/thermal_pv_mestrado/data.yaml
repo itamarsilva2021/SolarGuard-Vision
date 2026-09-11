@@ -1,11 +1,11 @@
-path: d:/OneDrive/AREA DE TRABALHO WINDOWS 11/Documentos/ThermoPV AI/datasets/thermal_pv_mestrado
+path: D:/OneDrive/AREA DE TRABALHO WINDOWS 11/Documentos/ThermoPV AI/datasets/thermal_pv_mestrado
 train: train/images
 val: valid/images
-test: valid/images
-
+test: test/images
 nc: 2
-names: ['hotspot group', 'panel with hotspots']
-
+names:
+- hotspot group
+- panel with hotspots
 roboflow:
   workspace: lexs-space
   project: solar-panel-thermal-hotspots
