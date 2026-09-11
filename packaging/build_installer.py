@@ -38,6 +38,10 @@ def build_pyinstaller_bundle() -> bool:
         pyinstaller_exe,
         "--noconfirm",
         "--clean",
+        "--distpath",
+        str(DIST_DIR),
+        "--workpath",
+        str(BUILD_DIR),
         str(SPEC_FILE),
     ]
     return run_command(cmd, "Empacotamento com PyInstaller")
@@ -47,6 +51,7 @@ def compile_inno_setup_installer() -> bool:
     """Busca o compilador do Inno Setup (ISCC.exe) e compila o instalador Windows."""
     # Locais padrões do Inno Setup no Windows
     possible_paths = [
+        Path.home() / r"AppData\Local\Programs\Inno Setup 6\ISCC.exe",
         Path(r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"),
         Path(r"C:\Program Files\Inno Setup 6\ISCC.exe"),
         Path(r"C:\Program Files (x86)\Inno Setup 5\ISCC.exe"),

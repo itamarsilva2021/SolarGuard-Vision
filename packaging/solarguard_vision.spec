@@ -9,13 +9,18 @@ import sys
 
 block_cipher = None
 
-# Diretório raiz do projeto
-root_dir = Path.cwd()
+# Diretório raiz do projeto (um nível acima da pasta packaging)
+root_dir = Path(SPECPATH).resolve().parent if "SPECPATH" in globals() else Path.cwd().resolve()
+main_script = str(root_dir / "main.py")
 
 # Coleta de dados estáticos obrigatórios
 datas = [
     (str(root_dir / "src" / "infrastructure" / "database" / "schema.sql"), "src/infrastructure/database"),
 ]
+
+# Incluir pesos base YOLO se existirem na raiz
+if (root_dir / "yolo11n.pt").exists():
+    datas.append((str(root_dir / "yolo11n.pt"), "."))
 
 # Incluir pesos de modelo se existirem na pasta models/
 models_dir = root_dir / "models"
@@ -33,6 +38,7 @@ hidden_imports = [
     "torchvision",
     "cv2",
     "numpy",
+    "polars",
     "PIL",
     "PIL.Image",
     "reportlab",
@@ -50,7 +56,7 @@ hidden_imports = [
 ]
 
 a = Analysis(
-    ["main.py"],
+    [main_script],
     pathex=[str(root_dir)],
     binaries=[],
     datas=datas,
