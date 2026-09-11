@@ -1,0 +1,123 @@
+{
+  "type": "FeatureCollection",
+  "name": "Inspeção: Inspeção Automatizada Completa - E2E - Complexo Solar São Francisco",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "metadata": {
+    "generator": "SolarGuard Vision - Solar Thermal Vision & AI",
+    "spec": "RFC 7946",
+    "generated_at": "2026-09-11T17:42:36.818121",
+    "total_features": 3,
+    "severity_summary": {
+      "critical": 0,
+      "medium": 3,
+      "low": 0,
+      "informational": 0
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "7b89bdf1-9e2a-4073-bc4f-a4c4a2f3b205",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -40.502718393561274,
+          -9.389078757170916,
+          0.0
+        ]
+      },
+      "properties": {
+        "anomaly_id": "7b89bdf1-9e2a-4073-bc4f-a4c4a2f3b205",
+        "image_id": "702e452e-4cde-4737-9db9-b5c05ab3c8f2",
+        "anomaly_type": "Hotspot",
+        "anomaly_type_code": "hotspot",
+        "severity": "Médio (Classe 2 - IEC)",
+        "severity_code": "medium",
+        "severity_color_hex": "#E67E22",
+        "max_temp_celsius": 61.0,
+        "delta_t_celsius": 20.0,
+        "min_temp_celsius": 26.0,
+        "avg_temp_celsius": 41.0,
+        "confidence": 0.92,
+        "project_id": "b9e4553b-7a66-4fba-9e7e-f7b134ecd52a",
+        "project_name": "Complexo Solar São Francisco",
+        "inspection_id": "dd0f1168-b88b-4f5d-b4ec-dcbf80b41d8b",
+        "inspection_title": "Inspeção Automatizada Completa - E2E",
+        "captured_at": null,
+        "crop_path": null,
+        "notes": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "c613cf8f-df19-4dd1-903c-532f916c8a6b",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -40.502718393561274,
+          -9.389078757170916,
+          0.0
+        ]
+      },
+      "properties": {
+        "anomaly_id": "c613cf8f-df19-4dd1-903c-532f916c8a6b",
+        "image_id": "4a60625e-abba-47e9-9587-07fccb90a4dc",
+        "anomaly_type": "Hotspot",
+        "anomaly_type_code": "hotspot",
+        "severity": "Médio (Classe 2 - IEC)",
+        "severity_code": "medium",
+        "severity_color_hex": "#E67E22",
+        "max_temp_celsius": 61.0,
+        "delta_t_celsius": 20.0,
+        "min_temp_celsius": 26.0,
+        "avg_temp_celsius": 41.0,
+        "confidence": 0.92,
+        "project_id": "b9e4553b-7a66-4fba-9e7e-f7b134ecd52a",
+        "project_name": "Complexo Solar São Francisco",
+        "inspection_id": "dd0f1168-b88b-4f5d-b4ec-dcbf80b41d8b",
+        "inspection_title": "Inspeção Automatizada Completa - E2E",
+        "captured_at": null,
+        "crop_path": null,
+        "notes": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "7f5637e4-0da0-41c9-ab50-432940c0faac",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -40.502718393561274,
+          -9.389078757170916,
+          0.0
+        ]
+      },
+      "properties": {
+        "anomaly_id": "7f5637e4-0da0-41c9-ab50-432940c0faac",
+        "image_id": "69996f0a-30cf-497f-b521-e8cc7ca51b8e",
+        "anomaly_type": "Hotspot",
+        "anomaly_type_code": "hotspot",
+        "severity": "Médio (Classe 2 - IEC)",
+        "severity_code": "medium",
+        "severity_color_hex": "#E67E22",
+        "max_temp_celsius": 61.0,
+        "delta_t_celsius": 20.0,
+        "min_temp_celsius": 26.0,
+        "avg_temp_celsius": 41.0,
+        "confidence": 0.92,
+        "project_id": "b9e4553b-7a66-4fba-9e7e-f7b134ecd52a",
+        "project_name": "Complexo Solar São Francisco",
+        "inspection_id": "dd0f1168-b88b-4f5d-b4ec-dcbf80b41d8b",
+        "inspection_title": "Inspeção Automatizada Completa - E2E",
+        "captured_at": null,
+        "crop_path": null,
+        "notes": null
+      }
+    }
+  ]
+}

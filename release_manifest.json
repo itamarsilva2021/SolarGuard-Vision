@@ -42,12 +42,20 @@
     "docs/manual_de_instalacao.md",
     "docs/resultados_experimentais.md",
     "docs/relatorio_conformidade_arquitetural.md",
-    "docs/dissertacao_validacao_experimental.md"
+    "docs/dissertacao_validacao_experimental.md",
+    "docs/LICENSING_ARCHITECTURE.md"
   ],
+  "licensing": {
+    "algorithm": "Ed25519 (RFC 8032)",
+    "architecture": "Asymmetric Key Pair (Server Private Key / Client Public Key)",
+    "binding": "SHA-256 Hardware Fingerprint (HWID)",
+    "local_generation": "STRICTLY_PROHIBITED",
+    "invalid_license_policy": "STRICT_EXECUTION_BLOCK"
+  },
   "verification": {
-    "total_tests": 207,
-    "passed_tests": 206,
-    "skipped_tests": 1,
+    "total_tests": 240,
+    "passed_tests": 240,
+    "skipped_tests": 0,
     "failed_tests": 0,
     "status": "APPROVED"
   }

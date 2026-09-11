@@ -41,7 +41,13 @@
 ---
 
 ### 🛠️ Estatísticas de Engenharia de Software
-- **Total de Testes Automatizados:** 207 testes (100% de aprovação nos testes executáveis).
+- **Total de Testes Automatizados:** 240 testes (100% de aprovação).
 - **Cobertura Arquitetural:** 4 camadas estritas da Clean Architecture.
 - **Banco de Dados:** SQLite com modo WAL e integridade referencial ativada.
-- **Segurança:** PBKDF2-HMAC-SHA256 e licenciamento anti-pirataria por HWID.
+- **Segurança e Licenciamento:**
+  - Autenticação e sessões com hash criptográfico PBKDF2-HMAC-SHA256.
+  - Licenciamento assimétrico **Ed25519 (RFC 8032)** com par de chaves públicas/privadas.
+  - Proibição absoluta de geração local de licenças na aplicação cliente.
+  - Bloqueio estrito de execução (`license invalid => bloqueia uso`) via guarda de inicialização e interface.
+  - Vinculação de hardware por impressão digital (HWID) baseada em SHA-256.
+

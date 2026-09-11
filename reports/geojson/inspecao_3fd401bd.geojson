@@ -1,0 +1,90 @@
+{
+  "type": "FeatureCollection",
+  "name": "Inspeção: Voo Termográfico Drone DJI Matrice 4T - Faixa A - Complexo Solar São Francisco 10MW",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "metadata": {
+    "generator": "SolarGuard Vision - Solar Thermal Vision & AI",
+    "spec": "RFC 7946",
+    "generated_at": "2026-09-11T17:12:38.941453",
+    "total_features": 2,
+    "severity_summary": {
+      "critical": 1,
+      "medium": 1,
+      "low": 0,
+      "informational": 0
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "06f47f64-129a-4349-9b86-982737b70761",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -40.498714726348965,
+          -9.412338518606555,
+          357.0
+        ]
+      },
+      "properties": {
+        "anomaly_id": "06f47f64-129a-4349-9b86-982737b70761",
+        "image_id": "d37f287d-e778-46b9-85bf-a669a62f7aca",
+        "anomaly_type": "Hotspot",
+        "anomaly_type_code": "hotspot",
+        "severity": "Crítico (Classe 3 - IEC)",
+        "severity_code": "critical",
+        "severity_color_hex": "#E74C3C",
+        "max_temp_celsius": 78.5,
+        "delta_t_celsius": 38.5,
+        "min_temp_celsius": null,
+        "avg_temp_celsius": null,
+        "confidence": 0.96,
+        "project_id": "b0079c2a-eee9-4f0d-bd04-f732b52491a8",
+        "project_name": "Complexo Solar São Francisco 10MW",
+        "inspection_id": "3fd401bd-f8cb-4386-8b1a-4338145995dd",
+        "inspection_title": "Voo Termográfico Drone DJI Matrice 4T - Faixa A",
+        "captured_at": "2026-07-10T10:15:00",
+        "crop_path": null,
+        "notes": "Ponto quente severo em célula central da string 4"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "f541e8db-69dd-40d6-b09f-ebe073f1f80d",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -40.498765,
+          -9.412345,
+          357.0
+        ]
+      },
+      "properties": {
+        "anomaly_id": "f541e8db-69dd-40d6-b09f-ebe073f1f80d",
+        "image_id": "d37f287d-e778-46b9-85bf-a669a62f7aca",
+        "anomaly_type": "Módulo Desconectado",
+        "anomaly_type_code": "disconnected_module",
+        "severity": "Médio (Classe 2 - IEC)",
+        "severity_code": "medium",
+        "severity_color_hex": "#E67E22",
+        "max_temp_celsius": 52.0,
+        "delta_t_celsius": 12.0,
+        "min_temp_celsius": null,
+        "avg_temp_celsius": null,
+        "confidence": 0.92,
+        "project_id": "b0079c2a-eee9-4f0d-bd04-f732b52491a8",
+        "project_name": "Complexo Solar São Francisco 10MW",
+        "inspection_id": "3fd401bd-f8cb-4386-8b1a-4338145995dd",
+        "inspection_title": "Voo Termográfico Drone DJI Matrice 4T - Faixa A",
+        "captured_at": "2026-07-10T10:15:00",
+        "crop_path": null,
+        "notes": "Módulo inteiro com aquecimento uniforme"
+      }
+    }
+  ]
+}
