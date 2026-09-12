@@ -60,7 +60,7 @@ def main():
 
     yaml_data = yaml.safe_load(data_yaml_path.read_text(encoding="utf-8")) or {}
     class_names = {idx: name for idx, name in enumerate(yaml_data.get("names", []))}
-    print(f"\n1. Configuração do Dataset Carregada:")
+    print("\n1. Configuração do Dataset Carregada:")
     print(f"   - Dataset: {dataset_path.name}")
     print(f"   - Arquivo: {data_yaml_path}")
     print(f"   - Classes do Treinamento: {class_names}")
@@ -75,7 +75,7 @@ def main():
     device = "cpu"
     learning_rate = 0.01
 
-    print(f"\n2. Iniciando Treinamento YOLOv11:")
+    print("\n2. Iniciando Treinamento YOLOv11:")
     print(f"   - Épocas: {epochs} | Batch: {batch_size} | Resolução: {imgsz}x{imgsz} | Dispositivo: {device}")
     
     trainer = YoloV11Trainer(output_dir=out_dir / "runs")
@@ -98,7 +98,7 @@ def main():
     # -------------------------------------------------------------------------
     # 2. VALIDAÇÃO FORMAL ULTRALYTICS (mAP50, mAP50-95, Precision, Recall, F1)
     # -------------------------------------------------------------------------
-    print(f"\n3. Executando Validação Formal Ultralytics no Conjunto Independente:")
+    print("\n3. Executando Validação Formal Ultralytics no Conjunto Independente:")
     validator = YoloV11Validator(class_names=class_names)
     val_metrics = validator.evaluate(
         weights_path=final_best_pt,
@@ -115,7 +115,7 @@ def main():
     # -------------------------------------------------------------------------
     # 3. AVALIAÇÃO CIENTÍFICA CORRIGIDA (IoU >= 0.45 COM BACKGROUND EXPLÍCITO)
     # -------------------------------------------------------------------------
-    print(f"\n4. Executando Pareamento Científico Rigoroso (IoU >= 0.45 com Background):")
+    print("\n4. Executando Pareamento Científico Rigoroso (IoU >= 0.45 com Background):")
     eval_service = ExperimentalEvaluationService(output_dir=out_dir)
     y_true, y_pred, labels_list = eval_service._extract_real_ground_truth_and_predictions(
         dataset_dir=dataset_path,
@@ -232,7 +232,7 @@ def main():
                 round(cm.balanced_accuracy, 4),
             ])
 
-    print(f"\n5. Arquivo CSV consolidado gerado com sucesso:")
+    print("\n5. Arquivo CSV consolidado gerado com sucesso:")
     print(f"   - Caminho: {csv_v2_path}")
 
     # -------------------------------------------------------------------------
@@ -304,7 +304,7 @@ def main():
     print(f"   - Relatório Excel: {xlsx_path}")
 
     elapsed = time.time() - start_time
-    print(f"\n" + "=" * 80)
+    print("\n" + "=" * 80)
     print(f"REVALIDAÇÃO EXPERIMENTAL 2026 CONCLUÍDA EM {elapsed:.2f}s!")
     print(f"TODOS OS ARQUIVOS SALVOS EM: {out_dir}")
     print("=" * 80)

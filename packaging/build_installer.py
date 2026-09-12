@@ -95,7 +95,7 @@ def main():
     print("\n" + "=" * 70)
     if installer_ok:
         print("[+] BUILD CONCLUÍDO COM SUCESSO!")
-        print(f"[+] Instalador gerado em: dist/installer/Setup_SolarGuard_Vision_v1.0.0.exe")
+        print("[+] Instalador gerado em: dist/installer/Setup_SolarGuard_Vision_v1.0.0.exe")
     else:
         print("[+] Aplicação desktop compilada com sucesso em: dist/SolarGuard_Vision/SolarGuard_Vision.exe")
     print("=" * 70)
