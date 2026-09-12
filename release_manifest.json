@@ -58,6 +58,18 @@
     "local_generation": "STRICTLY_PROHIBITED",
     "invalid_license_policy": "STRICT_EXECUTION_BLOCK"
   },
+  "authentication": {
+    "algorithm": "Argon2id (RFC 9106)",
+    "kdf_parameters": {
+      "iterations": 3,
+      "memory_cost_kib": 65536,
+      "lanes": 4,
+      "key_length_bytes": 32,
+      "salt_bytes": 16
+    },
+    "password_policy": "Minimum 12 characters",
+    "migration_strategy": "Automatic transparent rehash from legacy PBKDF2 to Argon2id on login"
+  },
   "environment": {
     "package_manager": "uv",
     "lockfile": "uv.lock",
@@ -70,11 +82,11 @@
   "ci_cd": {
     "platform": "GitHub Actions",
     "workflow": ".github/workflows/ci.yml",
-    "checks": ["Ruff Linter", "MyPy Type Checker", "Pytest (240 tests)", "Coverage (87%)"]
+    "checks": ["Ruff Linter", "MyPy Type Checker", "Pytest (247 tests)", "Coverage (87%)"]
   },
   "verification": {
-    "total_tests": 240,
-    "passed_tests": 240,
+    "total_tests": 247,
+    "passed_tests": 247,
     "skipped_tests": 0,
     "failed_tests": 0,
     "status": "APPROVED"

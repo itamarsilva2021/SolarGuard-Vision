@@ -17,7 +17,7 @@ O **SolarGuard Vision** é uma estação de trabalho científica e operacional p
 Ao inicializar o sistema, é exibida a tela de autenticação segura:
 
 1. **Credenciais Padrão de Primeiro Acesso:**
-   - **Administrador:** Usuário: `admin` | Senha: `admin123` (recomendado alterar no primeiro login).
+   - **Administrador:** Usuário: `admin` | Senha: `Admin@SolarGuard2026!` (mínimo de 12 caracteres com criptografia Argon2id, recomendado alterar no primeiro login).
 2. **Níveis de Acesso:**
    - **ADMIN:** Configurações globais, backup, licença e gestão de usuários.
    - **INSPECTOR:** Criação de projetos, importação de voos, processamento de IA e geração de laudos.

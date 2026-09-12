@@ -156,8 +156,8 @@ class TestUserService:
         assert auth_fail.is_success is False
 
     def test_reject_duplicate_username(self, user_service: UserService):
-        user_service.create_user("inspetor_solar", "senha123", "Inspetor 1")
-        dup_res = user_service.create_user("inspetor_solar", "outrasenha", "Inspetor 2")
+        user_service.create_user("inspetor_solar", "SenhaSegura123!", "Inspetor 1")
+        dup_res = user_service.create_user("inspetor_solar", "OutraSenhaSegura123!", "Inspetor 2")
         assert dup_res.is_success is False
         assert "já está em uso" in dup_res.error
 

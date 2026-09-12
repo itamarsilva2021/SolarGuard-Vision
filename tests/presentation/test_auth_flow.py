@@ -130,7 +130,7 @@ def test_session_manager_invalid_credentials_and_inactive_user(auth_setup):
     # Usuário inativo
     user_svc.create_user(
         username="bloqueado",
-        password="password123",
+        password="password_segura123",
         full_name="Usuário Demitido",
         role=UserRole.VIEWER,
     )
@@ -138,7 +138,7 @@ def test_session_manager_invalid_credentials_and_inactive_user(auth_setup):
     user.is_active = False
     user_repo.save(user)
 
-    res_inativo = session_mgr.login("bloqueado", "password123")
+    res_inativo = session_mgr.login("bloqueado", "password_segura123")
     assert res_inativo.is_failure is True
     assert "desativada" in res_inativo.error
     assert session_mgr.is_authenticated() is False

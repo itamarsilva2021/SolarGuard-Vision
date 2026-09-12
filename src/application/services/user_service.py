@@ -14,6 +14,8 @@ from src.infrastructure.security.password_hasher import PasswordHasher
 
 logger = get_logger("UserService")
 
+DEFAULT_ADMIN_PASSWORD = "Admin@SolarGuard2026!"
+
 
 class UserService:
     """
@@ -32,13 +34,13 @@ class UserService:
         email: Optional[str] = None,
     ) -> Result[User, str]:
         """
-        Cadastra um novo usuário no sistema com hash criptográfico seguro PBKDF2.
+        Cadastra um novo usuário no sistema com hash criptográfico seguro Argon2id.
         """
         clean_username = username.strip().lower()
         if len(clean_username) < 3:
             return Failure("O nome de usuário deve ter pelo menos 3 caracteres.")
-        if len(password) < 6:
-            return Failure("A senha deve possuir no mínimo 6 caracteres.")
+        if len(password) < 12:
+            return Failure("A senha deve possuir no mínimo 12 caracteres.")
 
         # Verificar se usuário já existe
         existing = self.user_repo.get_by_username(clean_username)
@@ -58,12 +60,13 @@ class UserService:
         )
 
         saved = self.user_repo.save(new_user)
-        logger.info(f"Usuário criado com sucesso: {saved.username} ({saved.role.value})")
+        logger.info(f"Usuário criado com sucesso com Argon2id: {saved.username} ({saved.role.value})")
         return Success(saved)
 
     def authenticate(self, username: str, password: str) -> Result[User, str]:
         """
-        Autentica credenciais de login e atualiza data do último acesso.
+        Autentica credenciais de login, executa rehash automático para Argon2id caso
+        o hash armazenado seja PBKDF2 legado, e atualiza a data do último acesso.
         """
         clean_username = username.strip().lower()
         user = self.user_repo.get_by_username(clean_username)
@@ -77,6 +80,13 @@ class UserService:
         if not PasswordHasher.verify_password(password, user.password_hash, user.salt):
             return Failure("Usuário ou senha inválidos.")
 
+        # Rehash automático para Argon2id caso o hash seja legado (PBKDF2)
+        if PasswordHasher.needs_rehash(user.password_hash):
+            new_hash, new_salt = PasswordHasher.hash_password(password)
+            user.password_hash = new_hash
+            user.salt = new_salt
+            logger.info(f"Hash de senha do usuário '{user.username}' migrado com sucesso de PBKDF2 para Argon2id.")
+
         # Atualizar data do último login
         user.last_login = datetime.now()
         self.user_repo.save(user)
@@ -85,7 +95,7 @@ class UserService:
         return Success(user)
 
     def change_password(self, user_id: str, old_password: str, new_password: str) -> Result[bool, str]:
-        """Altera a senha de um usuário existente mediante confirmação da senha anterior."""
+        """Altera a senha de um usuário existente mediante confirmação da senha anterior e tamanho mínimo de 12 caracteres."""
         user = self.user_repo.get_by_id(user_id)
         if not user:
             return Failure("Usuário não encontrado.")
@@ -93,15 +103,15 @@ class UserService:
         if not PasswordHasher.verify_password(old_password, user.password_hash, user.salt):
             return Failure("Senha atual incorreta.")
 
-        if len(new_password) < 6:
-            return Failure("A nova senha deve ter pelo menos 6 caracteres.")
+        if len(new_password) < 12:
+            return Failure("A nova senha deve possuir no mínimo 12 caracteres.")
 
         new_hash, new_salt = PasswordHasher.hash_password(new_password)
         user.password_hash = new_hash
         user.salt = new_salt
         self.user_repo.save(user)
 
-        logger.info(f"Senha alterada com sucesso para: {user.username}")
+        logger.info(f"Senha alterada com sucesso (Argon2id) para: {user.username}")
         return Success(True)
 
     def list_users(self) -> List[User]:
@@ -115,12 +125,12 @@ class UserService:
     def ensure_default_admin(
         self,
         default_username: str = "admin",
-        default_password: str = "admin123",
+        default_password: str = DEFAULT_ADMIN_PASSWORD,
         default_name: str = "Administrador do Sistema",
     ) -> User:
         """
         Garante a existência de ao menos um administrador para acesso inicial ao sistema.
-        Se nenhum usuário existir no banco de dados, cria o usuário padrão com hash PBKDF2 seguro.
+        Se nenhum usuário existir no banco de dados, cria o usuário padrão com hash Argon2id seguro.
         """
         existing = self.user_repo.get_by_username(default_username)
         if existing:

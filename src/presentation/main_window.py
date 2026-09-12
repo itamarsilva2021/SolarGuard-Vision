@@ -60,7 +60,7 @@ from src.infrastructure.database.repositories.sqlite_thermal_anomaly_repository 
 from src.infrastructure.database.repositories.sqlite_thermal_image_repository import SqliteThermalImageRepository
 from src.infrastructure.database.repositories.sqlite_report_repository import SqliteReportRepository
 from src.infrastructure.database.repositories.sqlite_user_repository import SqliteUserRepository
-from src.application.services.user_service import UserService
+from src.application.services.user_service import UserService, DEFAULT_ADMIN_PASSWORD
 from src.application.services.session_service import SessionManager
 from src.presentation.dataset_audit_window import DatasetAuditWidget
 
@@ -751,7 +751,7 @@ class MainWindow(QMainWindow):
             user_svc = UserService(user_repo)
             admin_user = user_svc.ensure_default_admin()
             self.session_manager = SessionManager(user_svc)
-            self.session_manager.login(admin_user.username, "admin123")
+            self.session_manager.login(admin_user.username, DEFAULT_ADMIN_PASSWORD)
 
         self._setup_ui()
         self.stacked = self.stack
