@@ -28,11 +28,8 @@ data/backups/
 data/updates/
 data/license.key
 data/license.lic
-server_tools/*.key
-server_tools/*.pem
-server_tools/*.priv
-server_tools/*.lic
-server_tools/keys/
+# Ferramentas exclusivas de servidor (não versionar no repositório do cliente)
+server_tools/
 .env*
 
 # Logs e Diagnósticos Locais
