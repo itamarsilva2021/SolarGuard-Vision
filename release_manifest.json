@@ -45,7 +45,8 @@
     "docs/dissertacao_validacao_experimental.md",
     "docs/LICENSING_ARCHITECTURE.md",
     "docs/ARTEFATOS_E_STORAGE.md",
-    "docs/SECURE_CONTAINER_ARCHITECTURE.md"
+    "docs/SECURE_CONTAINER_ARCHITECTURE.md",
+    "docs/SECURE_UPDATES_ARCHITECTURE.md"
   ],
   "large_file_storage": {
     "engine": "Git LFS (Large File Storage)",
@@ -79,6 +80,16 @@
     "signature": "Ed25519 (RFC 8032)",
     "security_guarantees": ["Confidentiality", "Integrity", "Authenticity", "Anti-Zip-Slip Protection"]
   },
+  "secure_updater": {
+    "manifest_signature": "Ed25519 (RFC 8032)",
+    "binary_integrity": "SHA-256 (64 KiB chunked digest)",
+    "security_guarantees": [
+      "Manifest Authenticity (Pre-download Ed25519 validation)",
+      "Downgrade / Rollback Attack Prevention (Strict SemVer)",
+      "Malicious Binary Discard (Immediate unlinking on SHA mismatch)",
+      "Pre-execution Anti-TOCTOU Revalidation"
+    ]
+  },
   "environment": {
     "package_manager": "uv",
     "lockfile": "uv.lock",
@@ -91,11 +102,11 @@
   "ci_cd": {
     "platform": "GitHub Actions",
     "workflow": ".github/workflows/ci.yml",
-    "checks": ["Ruff Linter", "MyPy Type Checker", "Pytest (259 tests)", "Coverage (87%)"]
+    "checks": ["Ruff Linter", "MyPy Type Checker", "Pytest (269 tests)", "Coverage (87%)"]
   },
   "verification": {
-    "total_tests": 259,
-    "passed_tests": 259,
+    "total_tests": 269,
+    "passed_tests": 269,
     "skipped_tests": 0,
     "failed_tests": 0,
     "status": "APPROVED"
