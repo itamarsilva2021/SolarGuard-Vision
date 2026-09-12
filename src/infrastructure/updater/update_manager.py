@@ -32,7 +32,7 @@ logger = get_logger("UpdateManager")
 
 # Chave pública padrão de distribuição de atualizações do SolarGuard Vision (32 bytes Ed25519 em Base64)
 # Chave exclusiva e estritamente segregada da chave de licenciamento
-DEFAULT_UPDATE_PUBLIC_KEY_B64 = "gBnmFd+YIIseCIATjxxejUAk0SCO0BBn69Nqh/av4wM="
+DEFAULT_UPDATE_PUBLIC_KEY_B64 = "700G66KZ00UFCZzJFHOamnO2KobuRt8G9v0kIhLs9oY="
 
 
 @dataclass

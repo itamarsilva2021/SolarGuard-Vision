@@ -28,7 +28,7 @@ from src.core.logger import get_logger
 logger = get_logger("LicenseManager")
 
 # Chave pública oficial de verificação de licenciamento do SolarGuard Vision (Cliente)
-DEFAULT_PUBLIC_KEY_B64 = "rNacn/V+4D6djCFjJXCin2zQx/oU6HfMK0jpj9hpsfU="
+DEFAULT_PUBLIC_KEY_B64 = "3cGAF/ZxS0pAMIth6QKVVZzy+8dZ2DxiKfbro93RYOw="
 
 
 class LicenseType(str, Enum):

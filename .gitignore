@@ -32,6 +32,8 @@ server_tools/*.key
 server_tools/*.pem
 server_tools/*.priv
 server_tools/*.lic
+server_tools/keys/
+.env*
 
 # Logs e Diagnósticos Locais
 logs/*.log
