@@ -13,6 +13,7 @@ __pycache__/
 # Testes e Cobertura
 .pytest_cache/
 .coverage
+coverage.xml
 htmlcov/
 .tox/
 .nox/
@@ -26,13 +27,14 @@ data/*.key
 data/backups/
 data/updates/
 data/license.key
+data/license.lic
 
 # Logs e Diagnósticos Locais
 logs/*.log
 logs/crashes/
 *.log
 
-# Caches e Arquivos Temporários
+# Caches e Arquivos Temporários de Compilação
 cache/
 .mypy_cache/
 .ruff_cache/
@@ -45,6 +47,16 @@ runs/
 experiments/*/runs/
 *.pt.backup
 *.cache
+
+# Relatórios e Mapas Gerados Dinamicamente
+reports/*.pdf
+reports/charts/*
+reports/maps/*
+reports/geojson/*
+!reports/.gitkeep
+!reports/charts/.gitkeep
+!reports/maps/.gitkeep
+!reports/geojson/.gitkeep
 
 # Arquivos do Sistema Operacional
 .DS_Store

@@ -3,6 +3,7 @@
 [![CI/CD Pipeline](https://github.com/itamarsilva2021/SolarGuard-Vision/actions/workflows/ci.yml/badge.svg)](https://github.com/itamarsilva2021/SolarGuard-Vision/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/Tests-240%20passed-brightgreen?logo=pytest)](https://github.com/itamarsilva2021/SolarGuard-Vision)
 [![Coverage](https://img.shields.io/badge/Coverage-87%25-brightgreen?logo=codecov)](https://github.com/itamarsilva2021/SolarGuard-Vision)
+[![Git LFS](https://img.shields.io/badge/Git%20LFS-Models%20%26%20Datasets-blueviolet?logo=git-lfs)](docs/ARTEFATOS_E_STORAGE.md)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue.svg)](https://mypy-lang.org/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
@@ -53,9 +54,10 @@ O projeto utiliza o gerenciador de alta performance **`uv`** com **`uv.lock`**, 
 
 ### Instalação com `uv` (Recomendado):
 ```powershell
-# 1. Clonar o repositório
+# 1. Clonar o repositório e baixar os modelos pesados com Git LFS
 git clone https://github.com/itamarsilva2021/SolarGuard-Vision.git
 cd SolarGuard-Vision
+git lfs pull
 
 # 2. Instalação Enxuta de Produção (Apenas Runtime):
 uv sync --no-dev

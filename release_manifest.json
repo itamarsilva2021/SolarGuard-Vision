@@ -43,8 +43,14 @@
     "docs/resultados_experimentais.md",
     "docs/relatorio_conformidade_arquitetural.md",
     "docs/dissertacao_validacao_experimental.md",
-    "docs/LICENSING_ARCHITECTURE.md"
+    "docs/LICENSING_ARCHITECTURE.md",
+    "docs/ARTEFATOS_E_STORAGE.md"
   ],
+  "large_file_storage": {
+    "engine": "Git LFS (Large File Storage)",
+    "tracked_patterns": ["*.pt", "*.onnx", "*.engine", "datasets/**/*.jpg", "datasets/**/*.png", "datasets/**/*.rjpeg"],
+    "configuration": ".gitattributes"
+  },
   "licensing": {
     "algorithm": "Ed25519 (RFC 8032)",
     "architecture": "Asymmetric Key Pair (Server Private Key / Client Public Key)",
