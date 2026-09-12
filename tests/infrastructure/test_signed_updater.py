@@ -159,7 +159,7 @@ class TestSecureDownloadAndShaIntegrity:
             is_newer=True,
         )
 
-        res = updater.download_update(update_info)
+        res = updater.download_update(update_info, allow_local_source=True)
         assert res.is_success is True
         downloaded_file = res.value
         assert downloaded_file.exists()
@@ -191,7 +191,7 @@ class TestSecureDownloadAndShaIntegrity:
             is_newer=True,
         )
 
-        res = updater.download_update(update_info)
+        res = updater.download_update(update_info, allow_local_source=True)
         assert res.is_success is False
         assert "falha crítica de segurança" in res.error.lower() or "diverge" in res.error.lower()
 
@@ -200,6 +200,52 @@ class TestSecureDownloadAndShaIntegrity:
         assert not dest_expected.exists()
         # Arquivo temporário também deve ter sido removido
         assert not (dest_expected.with_suffix(".exe.downloading")).exists()
+
+    def test_download_rejects_insecure_http_url(self, tmp_path: Path):
+        updater = UpdateManager(current_version="1.0.0", downloads_dir=tmp_path)
+        update_info = UpdateInfo(
+            version="1.1.0",
+            release_date="2026-09-12",
+            release_notes="Inseguro",
+            download_url="http://downloads.solarguard.internal/update.exe",
+            sha256_checksum="a" * 64,
+            is_newer=True,
+        )
+        res = updater.download_update(update_info)
+        assert res.is_success is False
+        assert "inseguro" in res.error.lower() or "http://" in res.error.lower()
+
+    def test_download_rejects_file_url_by_default_in_production(self, tmp_path: Path, dummy_installer):
+        installer_file, sha256 = dummy_installer
+        updater = UpdateManager(current_version="1.0.0", downloads_dir=tmp_path)
+        update_info = UpdateInfo(
+            version="1.1.0",
+            release_date="2026-09-12",
+            release_notes="Teste de produção",
+            download_url=f"file://{installer_file.resolve().as_posix()}",
+            sha256_checksum=sha256,
+            is_newer=True,
+        )
+        # Por padrão allow_local_source=False
+        res = updater.download_update(update_info)
+        assert res.is_success is False
+        assert "origem local rejeitada" in res.error.lower() or "file://" in res.error.lower()
+
+    def test_download_rejects_schemeless_local_path_by_default_in_production(self, tmp_path: Path, dummy_installer):
+        installer_file, sha256 = dummy_installer
+        updater = UpdateManager(current_version="1.0.0", downloads_dir=tmp_path)
+        update_info = UpdateInfo(
+            version="1.1.0",
+            release_date="2026-09-12",
+            release_notes="Teste relativo",
+            download_url=installer_file.resolve().as_posix(),
+            sha256_checksum=sha256,
+            is_newer=True,
+        )
+        # Por padrão allow_local_source=False
+        res = updater.download_update(update_info)
+        assert res.is_success is False
+        assert "origem local rejeitada" in res.error.lower()
 
 
 class TestSecureInstallation:
@@ -264,7 +310,7 @@ class TestCompleteUpdatePipelineE2E:
         assert update_info.is_newer is True
 
         # 3. Cliente executa download seguro com validação SHA-256
-        download_res = updater.download_update(update_info)
+        download_res = updater.download_update(update_info, allow_local_source=True)
         assert download_res.is_success is True
         verified_installer = download_res.value
 

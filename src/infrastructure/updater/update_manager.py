@@ -303,14 +303,47 @@ class UpdateManager:
         destination_path: Optional[Union[Path, str]] = None,
         progress_callback: Optional[Callable[[int, int], None]] = None,
         timeout: int = 30,
+        allow_local_source: bool = False,
     ) -> Result[Path, str]:
         """
         Executa o download seguro do instalador e valida imediatamente o hash SHA-256.
-        PROTEÇÃO ATIVA: Se o arquivo baixado tiver hash divergente, ele é excluído imediatamente.
+        PROTEÇÃO ATIVA:
+        - Em produção (padrão allow_local_source=False): Aceita EXCLUSIVAMENTE URLs com prefixo https://.
+          Rejeita terminantemente http:// (sem TLS), file:// e caminhos locais/UNC sem esquema.
+        - Em testes controlados (allow_local_source=True): Permite fontes file:// e caminhos de arquivos em disco.
+        - Se o arquivo baixado tiver hash divergente, ele é excluído imediatamente.
         """
         url = update_info.download_url
         if not url:
             return Failure("URL de download inválida ou ausente.")
+
+        url_clean = url.strip()
+        is_https = url_clean.lower().startswith("https://")
+        is_http = url_clean.lower().startswith("http://")
+        is_file = url_clean.lower().startswith("file://")
+        is_schemeless = "://" not in url_clean
+
+        # Validação estrita de protocolo de transporte
+        if not is_https:
+            if (is_file or is_schemeless) and allow_local_source:
+                # Permitido exclusivamente em testes automatizados / ambiente controlado
+                pass
+            elif is_http:
+                return Failure(
+                    "Protocolo de transporte inseguro rejeitado (http:// sem TLS). "
+                    "Em produção, apenas URLs https:// são autorizadas para download de atualizações."
+                )
+            elif is_file or is_schemeless:
+                return Failure(
+                    "Origem local rejeitada (file:// ou caminho relativo/UNC). "
+                    "Por razões de segurança, fontes locais são desabilitadas em produção "
+                    "(apenas URLs https:// com assinatura válida são permitidas)."
+                )
+            else:
+                return Failure(
+                    f"Esquema de download não suportado ou perigoso: '{url_clean}'. "
+                    "Apenas URLs https:// são permitidas em ambiente de produção."
+                )
 
         if destination_path:
             target_path = Path(destination_path)
@@ -322,17 +355,18 @@ class UpdateManager:
         temp_download_path = target_path.with_suffix(target_path.suffix + ".downloading")
 
         try:
-            logger.info(f"Iniciando download seguro da atualização v{update_info.version} de: {url}")
+            logger.info(f"Iniciando download seguro da atualização v{update_info.version} de: {url_clean}")
 
-            # Suporte para protocolos http/https ou caminho local para testes
-            if url.startswith("file://") or "://" not in url:
-                local_src = Path(url.replace("file://", ""))
+            # Obtenção do pacote via filesystem local (testes) ou HTTPS (produção)
+            if is_file or is_schemeless:
+                local_path_str = url_clean[7:] if is_file else url_clean
+                local_src = Path(local_path_str)
                 if not local_src.exists():
                     return Failure(f"Arquivo fonte de atualização não encontrado: {local_src}")
                 content = local_src.read_bytes()
                 temp_download_path.write_bytes(content)
             else:
-                req = urllib.request.Request(url, headers={"User-Agent": f"SolarGuardVision/{self.current_version}"})
+                req = urllib.request.Request(url_clean, headers={"User-Agent": f"SolarGuardVision/{self.current_version}"})
                 with urllib.request.urlopen(req, timeout=timeout) as response, open(temp_download_path, "wb") as out_f:
                     total_size = int(response.headers.get("Content-Length", 0))
                     downloaded = 0
