@@ -275,3 +275,13 @@ class TestCompleteUpdatePipelineE2E:
             dry_run=True,
         )
         assert install_res.is_success is True
+
+
+def test_update_and_license_public_keys_segregation():
+    """Valida que o par de atualização de software não compartilha chave com o licenciamento."""
+    from src.infrastructure.updater.update_manager import DEFAULT_UPDATE_PUBLIC_KEY_B64
+    from src.infrastructure.security.license_manager import DEFAULT_PUBLIC_KEY_B64
+
+    assert DEFAULT_UPDATE_PUBLIC_KEY_B64 != DEFAULT_PUBLIC_KEY_B64
+    assert len(DEFAULT_UPDATE_PUBLIC_KEY_B64) == 44
+    assert len(DEFAULT_PUBLIC_KEY_B64) == 44

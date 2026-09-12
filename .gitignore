@@ -28,6 +28,10 @@ data/backups/
 data/updates/
 data/license.key
 data/license.lic
+server_tools/*.key
+server_tools/*.pem
+server_tools/*.priv
+server_tools/*.lic
 
 # Logs e Diagnósticos Locais
 logs/*.log

@@ -30,8 +30,9 @@ from src.core.result import Failure, Result, Success
 
 logger = get_logger("UpdateManager")
 
-# Chave pública padrão de distribuição do SolarGuard Vision (32 bytes Ed25519 em Base64)
-DEFAULT_UPDATE_PUBLIC_KEY_B64 = "MzaED2Vwv8KQdspsV6snRel5Fkl+/BUy56gN68nG2YM="
+# Chave pública padrão de distribuição de atualizações do SolarGuard Vision (32 bytes Ed25519 em Base64)
+# Chave exclusiva e estritamente segregada da chave de licenciamento
+DEFAULT_UPDATE_PUBLIC_KEY_B64 = "gBnmFd+YIIseCIATjxxejUAk0SCO0BBn69Nqh/av4wM="
 
 
 @dataclass

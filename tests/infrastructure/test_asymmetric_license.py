@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 from PySide6.QtWidgets import QApplication
-from src.infrastructure.security.license_manager import LicenseManager, LicenseType, LicenseInfo
-from src.infrastructure.security.license_issuer import LicenseIssuer
+from src.infrastructure.security.license_manager import LicenseManager, LicenseType, LicenseInfo, DEFAULT_PUBLIC_KEY_B64
+from server_tools.license_issuer import LicenseIssuer
 from src.presentation.license_dialog import LicenseActivationDialog
 
 
@@ -218,3 +218,12 @@ def test_license_activation_dialog(qapp, license_env, monkeypatch):
     assert current.client_name == "Empresa de Teste"
 
     dialog.close()
+
+
+def test_license_and_update_public_keys_are_strictly_separated():
+    """Garante que a chave pública de licenciamento é estritamente DIFERENTE da chave pública de atualização."""
+    from src.infrastructure.updater.update_manager import DEFAULT_UPDATE_PUBLIC_KEY_B64
+
+    assert DEFAULT_PUBLIC_KEY_B64 != DEFAULT_UPDATE_PUBLIC_KEY_B64
+    assert len(DEFAULT_PUBLIC_KEY_B64) > 40
+    assert len(DEFAULT_UPDATE_PUBLIC_KEY_B64) > 40
