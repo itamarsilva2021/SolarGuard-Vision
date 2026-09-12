@@ -9,11 +9,14 @@ import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
+
+from cryptography.hazmat.primitives.asymmetric import ed25519
 
 from src.core.config import settings
 from src.core.logger import get_logger
 from src.core.result import Result, Success, Failure
+from src.infrastructure.security.secure_package import SecurePackageManager
 
 logger = get_logger("BackupService")
 
@@ -128,15 +131,142 @@ class BackupService:
             logger.error(f"Erro ao restaurar backup {path}: {e}", exc_info=True)
             return Failure(f"Falha na restauração do backup: {str(e)}")
 
+    def create_secure_backup(
+        self,
+        passphrase: str,
+        signing_key: ed25519.Ed25519PrivateKey,
+        custom_label: Optional[str] = None,
+    ) -> Result[Path, str]:
+        """
+        Cria um backup criptográfico blindado (.sgz) conjugando ZIP, AES-256-GCM e assinatura Ed25519.
+        Garante confidencialidade, integridade e autenticidade.
+        """
+        if not self.db_path.exists():
+            return Failure(f"Banco de dados não encontrado em: {self.db_path}")
+
+        try:
+            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            label_suffix = f"_{custom_label}" if custom_label else ""
+            package_filename = f"backup_solarguard_{timestamp_str}{label_suffix}.sgz"
+            package_path = self.backup_dir / package_filename
+
+            db_bytes = self.db_path.read_bytes()
+            db_sha256 = hashlib.sha256(db_bytes).hexdigest()
+
+            manifest = {
+                "app_name": settings.app_name,
+                "app_version": settings.app_version,
+                "created_at": datetime.now().isoformat(),
+                "db_filename": self.db_path.name,
+                "db_size_bytes": len(db_bytes),
+                "db_sha256": db_sha256,
+                "custom_label": custom_label,
+                "encryption": "AES-256-GCM",
+                "signature": "Ed25519",
+            }
+
+            virtual_files: Dict[str, Union[bytes, str]] = {
+                self.db_path.name: db_bytes,
+                "manifest.json": json.dumps(manifest, indent=4, ensure_ascii=False),
+            }
+
+            settings_file = settings.data_dir / "settings.json"
+            if settings_file.exists():
+                virtual_files["settings.json"] = settings_file.read_bytes()
+
+            pkg_mgr = SecurePackageManager()
+            res = pkg_mgr.pack(
+                output_path=package_path,
+                passphrase=passphrase,
+                signing_key=signing_key,
+                virtual_files=virtual_files,
+                metadata=manifest,
+            )
+            return res
+        except Exception as e:
+            logger.error(f"Erro ao criar backup seguro: {e}", exc_info=True)
+            return Failure(f"Falha ao gerar backup seguro: {str(e)}")
+
+    def restore_secure_backup(
+        self,
+        package_path: Union[Path, str],
+        passphrase: str,
+        verify_key: Optional[ed25519.Ed25519PublicKey] = None,
+    ) -> Result[bool, str]:
+        """
+        Restaura o banco de dados a partir de um backup seguro (.sgz) verificado com Ed25519 e AES-256.
+        """
+        pkg_file = Path(package_path)
+        if not pkg_file.exists():
+            return Failure(f"Arquivo de backup seguro não encontrado: {pkg_file}")
+
+        temp_restore_dir = self.backup_dir / f".temp_restore_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+        try:
+            temp_restore_dir.mkdir(parents=True, exist_ok=True)
+
+            pkg_mgr = SecurePackageManager()
+            unpack_res = pkg_mgr.unpack(
+                package_path=pkg_file,
+                output_dir=temp_restore_dir,
+                passphrase=passphrase,
+                expected_public_key=verify_key,
+            )
+            if not unpack_res.is_success:
+                shutil.rmtree(temp_restore_dir, ignore_errors=True)
+                return Failure(unpack_res.error)
+
+            manifest_file = temp_restore_dir / "manifest.json"
+            if not manifest_file.exists():
+                shutil.rmtree(temp_restore_dir, ignore_errors=True)
+                return Failure("Arquivo de backup inválido: manifest.json ausente no container.")
+
+            manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+            db_filename = manifest.get("db_filename", self.db_path.name)
+            restored_db_file = temp_restore_dir / db_filename
+            if not restored_db_file.exists():
+                shutil.rmtree(temp_restore_dir, ignore_errors=True)
+                return Failure(f"Arquivo do banco {db_filename} não encontrado no backup desempacotado.")
+
+            # Conferir SHA256 do banco
+            expected_sha256 = manifest.get("db_sha256")
+            computed_sha256 = hashlib.sha256(restored_db_file.read_bytes()).hexdigest()
+            if expected_sha256 and computed_sha256 != expected_sha256:
+                shutil.rmtree(temp_restore_dir, ignore_errors=True)
+                return Failure("Checksum SHA256 do banco de dados não confere. Restauração abortada.")
+
+            # Snapshot de segurança antes de sobrescrever
+            if self.db_path.exists():
+                safety_copy = self.db_path.with_suffix(".pre_restore.bak")
+                shutil.copy2(self.db_path, safety_copy)
+
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(restored_db_file, self.db_path)
+
+            settings_file = temp_restore_dir / "settings.json"
+            if settings_file.exists():
+                dest_settings = settings.data_dir / "settings.json"
+                shutil.copy2(settings_file, dest_settings)
+
+            shutil.rmtree(temp_restore_dir, ignore_errors=True)
+            logger.info(f"Backup seguro restaurado com sucesso a partir de: {pkg_file}")
+            return Success(True)
+
+        except Exception as e:
+            shutil.rmtree(temp_restore_dir, ignore_errors=True)
+            logger.error(f"Erro ao restaurar backup seguro {pkg_file}: {e}", exc_info=True)
+            return Failure(f"Falha na restauração do backup seguro: {str(e)}")
+
     def list_backups(self) -> List[Dict[str, Any]]:
-        """Lista todos os arquivos de backup existentes ordenados do mais recente ao mais antigo."""
+        """Lista todos os arquivos de backup existentes (.zip e .sgz) ordenados do mais recente ao mais antigo."""
         backups = []
-        for file in self.backup_dir.glob("backup_solarguard_*.zip"):
+        files = list(self.backup_dir.glob("backup_solarguard_*.zip")) + list(self.backup_dir.glob("backup_solarguard_*.sgz"))
+        for file in files:
             stat = file.stat()
             backups.append({
                 "filename": file.name,
                 "path": str(file),
                 "size_bytes": stat.st_size,
+                "is_secure": file.suffix.lower() == ".sgz",
                 "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
             })
         backups.sort(key=lambda x: x["created_at"], reverse=True)

@@ -44,7 +44,8 @@
     "docs/relatorio_conformidade_arquitetural.md",
     "docs/dissertacao_validacao_experimental.md",
     "docs/LICENSING_ARCHITECTURE.md",
-    "docs/ARTEFATOS_E_STORAGE.md"
+    "docs/ARTEFATOS_E_STORAGE.md",
+    "docs/SECURE_CONTAINER_ARCHITECTURE.md"
   ],
   "large_file_storage": {
     "engine": "Git LFS (Large File Storage)",
@@ -70,6 +71,14 @@
     "password_policy": "Minimum 12 characters",
     "migration_strategy": "Automatic transparent rehash from legacy PBKDF2 to Argon2id on login"
   },
+  "secure_container": {
+    "format": "SGZ (SolarGuard Secure Archive)",
+    "compression": "ZIP (DEFLATED)",
+    "cipher": "AES-256-GCM (128-bit Auth Tag)",
+    "kdf": "Argon2id (64 MiB RAM, 3 iterations, 4 lanes)",
+    "signature": "Ed25519 (RFC 8032)",
+    "security_guarantees": ["Confidentiality", "Integrity", "Authenticity", "Anti-Zip-Slip Protection"]
+  },
   "environment": {
     "package_manager": "uv",
     "lockfile": "uv.lock",
@@ -82,11 +91,11 @@
   "ci_cd": {
     "platform": "GitHub Actions",
     "workflow": ".github/workflows/ci.yml",
-    "checks": ["Ruff Linter", "MyPy Type Checker", "Pytest (247 tests)", "Coverage (87%)"]
+    "checks": ["Ruff Linter", "MyPy Type Checker", "Pytest (259 tests)", "Coverage (87%)"]
   },
   "verification": {
-    "total_tests": 247,
-    "passed_tests": 247,
+    "total_tests": 259,
+    "passed_tests": 259,
     "skipped_tests": 0,
     "failed_tests": 0,
     "status": "APPROVED"
