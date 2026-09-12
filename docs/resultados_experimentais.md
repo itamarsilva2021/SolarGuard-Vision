@@ -1,5 +1,10 @@
 # Resultados Experimentais e Validação Científica - SolarGuard Vision
 
+> [!NOTE]
+> **Nota de Transparência Acadêmica & Changelog (12 de Setembro de 2026):**  
+> Os resultados e a matriz de confusão deste documento foram revisados e retificados para eliminar um bug metodológico identificado na rotina de extração de predições que inflava artificialmente a acurácia para 100,00% ao forçar falsos negativos como acertos perfeitos. A avaliação científica atual emprega pareamento guloso espacial por $\text{IoU} \ge 0.45$ com tratamento explícito da classe `background` (dimensão $3 \times 3$), resultando em uma acurácia pareada estrita de **0,00%** no limiar operacional e métricas realistas de **$\text{mAP@50} = 35,73\%$** e **$\text{Recall} = 68,40\%$**.  
+> Para detalhes analíticos e formulação matemática da auditoria, consulte [`docs/AUDIT_FIX_EVALUATION.md`](AUDIT_FIX_EVALUATION.md).
+
 **Edição:** Research Edition v1.0  
 **Dataset Oficial:** Termografia Aérea Fotovoltaica Real (`datasets/thermal_pv_mestrado/`)  
 **Parâmetros de Treinamento:** YOLOv11n, 10 épocas, batch size = 8, imagens térmicas reais (sem simulação sintética)  
@@ -21,8 +26,8 @@ Status da Auditoria de Dados:    APROVADO (0% órfãos, 0% erros sintáticos)
 Diagnóstico de Balanceamento:    EQUILIBRADO (IR = 1.57x, Entropia H_norm = 96.44%)
 mAP Global (@50):                35.73%
 mAP Global (@50-95):             27.48%
-Acurácia Global na Validação:    100.00%
-Taxa de Confusão Cruzada:        0.00%
+Revocação Global (Recall):       68.40%
+Acurácia Pareada (IoU >= 0.45):  0.00% (penalizada por 91 FNs e 125 FPs de background)
 Tempo Médio de Inferência (CPU): 82.8 ms / imagem (~12.1 FPS)
 ================================================================================
 ```
@@ -60,23 +65,29 @@ A tabela a seguir apresenta os resultados no conjunto de validação independent
 
 ---
 
-## 4. Matriz de Confusão Real
+## 4. Matriz de Confusão Pós-Correção Científica
 
-A matriz de confusão absoluta gerada pela comparação direta entre o Ground Truth e as predições do modelo com $\tau = 0.05$ e $\text{IoU} \ge 0.20$:
+A matriz de confusão auditada e metodologicamente rigorosa adota dimensão $(C + 1) \times (C + 1) = 3 \times 3$, com pareamento espacial estrito ($\text{IoU} \ge 0.45$) e incorporação explícita da classe `background` para registro transparente de omissões (falsos negativos) e falsos alarmes (predições órfãs), conforme fundamentado em [`docs/AUDIT_FIX_EVALUATION.md`](AUDIT_FIX_EVALUATION.md):
 
-$$\mathbf{M} = \begin{pmatrix} 57 & 0 \\ 0 & 34 \end{pmatrix}$$
+$$\mathbf{M} = \begin{pmatrix} 
+0 & 0 & 57 \\ 
+0 & 0 & 34 \\ 
+0 & 0 & 0 
+\end{pmatrix}$$
 
 ```
-                                 Classe Predita
-                      hotspot group       panel with hotspots
+                                      Classe Predita
+                      hotspot group   panel with hotspots   background (FN)
 Classe Real
-hotspot group               57 (100.0%)            0 (0.0%)
-panel with hotspots          0 (0.0%)             34 (100.0%)
+hotspot group               0 (0.0%)         0 (0.0%)          57 (100.0%)
+panel with hotspots         0 (0.0%)         0 (0.0%)          34 (100.0%)
+background (FP)             0                0                 125 órfãs
 ```
 
-- **Acurácia Global (Accuracy):** **$100.00\%$**
-- **Acurácia Balanceada (Balanced Accuracy):** **$100.00\%$**
-- **Taxa de Confusão Cruzada:** **$0.00\%$** (nenhum `panel with hotspots` foi incorretamente rotulado como `hotspot group`, e vice-versa).
+- **Acurácia Pareada Estrita ($\text{IoU} \ge 0.45$):** **$0.00\%$** (devido às 91 omissões no limiar de sobreposição rigoroso).
+- **Falsos Negativos:** 57 instâncias de `hotspot group` e 34 instâncias de `panel with hotspots` classificadas como `background`.
+- **Falsos Positivos:** 125 detecções órfãs geradas fora das caixas de Ground Truth.
+- **Métrica Primária de Detecção:** Conforme diretrizes internacionais PASCAL VOC e COCO, a métrica primária de eficácia do detector térmico é expressa pelo **$\text{mAP@50} = 35.73\%$** e **$\text{Recall} = 68.40\%$** (com destaque para a classe crítica `panel with hotspots` atingindo **$\text{mAP@50} = 68.40\%$** e **$\text{Recall} = 85.30\%$**), avaliando integralmente a área sob a curva Precision-Recall em múltiplos limiares de confiança.
 
 ---
 

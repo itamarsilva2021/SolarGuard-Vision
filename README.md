@@ -40,7 +40,7 @@ SolarGuard Vision/
 │   ├── infrastructure/        # Motores de Radiometria, YOLOv11, SQLite WAL, DJI e GIS
 │   └── presentation/          # Interface Gráfica Reativa em PySide6 (Qt)
 ├── docs/                      # Compêndio Documental Completo para Dissertação
-├── tests/                     # 240 Testes Automatizados (100% de Aprovação)
+├── tests/                     # 274 Testes Automatizados (100% de Aprovação)
 ├── .github/workflows/         # Pipeline de CI/CD (Ruff, MyPy, Pytest, Coverage)
 ├── uv.lock                    # Ambiente determinístico e reproduzível
 └── packaging/                 # Scripts de Empacotamento para Windows
@@ -84,13 +84,14 @@ python main.py
 
 ## 📊 Resultados Experimentais Reais (Mestrado)
 
-O modelo YOLOv11n foi treinado e avaliado com **100% de dados reais de campo** (sem dados simulados):
+O modelo YOLOv11n foi treinado e avaliado com **100% de dados reais de campo** (sem dados simulados), sob avaliação científica com pareamento guloso por IoU ($\ge 0.45$) e contabilização estrita da classe `background` (conforme detalhado em [`docs/AUDIT_FIX_EVALUATION.md`](docs/AUDIT_FIX_EVALUATION.md)):
 
 - **Imagens Reais de Usinas:** 52 imagens
 - **Anotações de Falhas Íntegras:** 511 instâncias reais auditadas
-- **mAP Global (@50):** 35.73% (com classe `panel with hotspots` atingindo **68.40%**)
+- **mAP Global (@50):** **35.73%** (com classe `panel with hotspots` atingindo **68.40%**)
+- **mAP Global (@50-95):** **27.48%**
 - **Revocação (Recall):** **68.40%**
-- **Acurácia Global na Validação:** **100.00%** (0% de confusão cruzada)
+- **Acurácia Pareada Estrita ($\text{IoU} \ge 0.45$):** **0.00%** (avaliação realista com penalização por falsos negativos/omissões espaciais de `background`, eliminando o bug metodológico anterior que inflava artificialmente a acurácia para 100%)
 - **Tempo de Inferência:** $82.8\text{ ms}$ por imagem em CPU ($> 65\text{ FPS}$ em GPU)
 
 ---
