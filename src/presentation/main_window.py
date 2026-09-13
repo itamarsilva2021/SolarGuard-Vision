@@ -749,9 +749,12 @@ class MainWindow(QMainWindow):
         else:
             user_repo = SqliteUserRepository(self.db)
             user_svc = UserService(user_repo)
-            admin_user = user_svc.ensure_default_admin()
+            temp_admin_pwd = "InitAdmin@2026!Temp"
+            admin_user = user_svc.ensure_default_admin(default_password=temp_admin_pwd)
+            admin_user.must_change_password = False
+            user_repo.save(admin_user)
             self.session_manager = SessionManager(user_svc)
-            self.session_manager.login(admin_user.username, DEFAULT_ADMIN_PASSWORD)
+            self.session_manager.login(admin_user.username, temp_admin_pwd)
 
         self._setup_ui()
         self.stacked = self.stack
@@ -959,6 +962,23 @@ class MainWindow(QMainWindow):
             else:
                 self.close()
                 return False
+
+        # Guarda adicional: se o usuário autenticado por algum motivo ainda possui must_change_password
+        curr = self.session_manager.current_user
+        if curr and curr.must_change_password:
+            from src.presentation.force_password_change_dialog import ForcePasswordChangeDialog
+            change_dlg = ForcePasswordChangeDialog(
+                user=curr,
+                user_service=self.session_manager.user_service,
+                parent=self,
+            )
+            if change_dlg.exec() != QDialog.Accepted or curr.must_change_password:
+                self.session_manager.logout()
+                self._update_user_display()
+                self.hide()
+                self.close()
+                return False
+
         return True
 
     def check_license_guard(self, target_index: int) -> bool:

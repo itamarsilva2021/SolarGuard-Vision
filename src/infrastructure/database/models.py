@@ -181,7 +181,12 @@ def row_to_report(row: sqlite3.Row) -> Report:
 
 
 def row_to_user(row: sqlite3.Row) -> User:
-    """Converte linha do SQLite para entidade User."""
+    """Converte linha do SQLite para entidade User com suporte retrocompatível a must_change_password e bloqueio."""
+    keys = row.keys() if hasattr(row, "keys") else []
+    must_change = bool(row["must_change_password"]) if "must_change_password" in keys else False
+    failed_attempts = int(row["failed_login_attempts"]) if ("failed_login_attempts" in keys and row["failed_login_attempts"] is not None) else 0
+    locked_until = _parse_datetime(row["locked_until"]) if "locked_until" in keys else None
+    lockout_count = int(row["lockout_count"]) if ("lockout_count" in keys and row["lockout_count"] is not None) else 0
     return User(
         id=row["id"],
         username=row["username"],
@@ -191,6 +196,10 @@ def row_to_user(row: sqlite3.Row) -> User:
         email=row["email"],
         role=UserRole(row["role"]),
         is_active=bool(row["is_active"]),
+        must_change_password=must_change,
+        failed_login_attempts=failed_attempts,
+        locked_until=locked_until,
+        lockout_count=lockout_count,
         last_login=_parse_datetime(row["last_login"]),
         created_at=_parse_datetime(row["created_at"]) or datetime.now(),
     )

@@ -33,6 +33,10 @@ class User:
     role: UserRole = UserRole.INSPECTOR
     email: Optional[str] = None
     is_active: bool = True
+    must_change_password: bool = False
+    failed_login_attempts: int = 0
+    locked_until: Optional[datetime] = None
+    lockout_count: int = 0
     last_login: Optional[datetime] = None
     created_at: datetime = field(default_factory=datetime.now)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
