@@ -91,7 +91,27 @@ background (FP)             0                0                 125 órfãs
 
 ---
 
-## 5. Artefatos Físicos e Reprodutibilidade
+## 5. Limitações Metodológicas e Ameaças à Validade
+
+Em consonância com as boas práticas de integridade acadêmica e reprodutibilidade científica, ressalvam-se as seguintes condições de contorno dos experimentos relatados:
+
+### 5.1. Particionamento Legado e Risco de Dependência Espacial
+O benchmark oficial de $\text{mAP@50} = 35.73\%$ e $\text{Recall} = 68.40\%$ foi avaliado sob a divisão original do dataset (`datasets/thermal_pv_mestrado/`), na qual os diretórios de validação e teste coincidiam (`val == test`) e as imagens não haviam sido agrupadas por sobrevoo de UAV. Conforme detalhado em [`docs/DATASET_SPLIT_AUDIT.md`](DATASET_SPLIT_AUDIT.md), quadros sequenciais da mesma fileira possuem forte similaridade geométrica e de iluminação, gerando risco de vazamento (*leakage*) por dependência espacial e térmica entre treino e validação.
+
+### 5.2. Enquadramento como Piloto Operacional e Caráter Preliminar das Métricas
+O estágio atual do sistema deve ser tecnicamente compreendido como uma **fase de piloto operacional e prova de conceito quanto à maturidade das métricas de IA**, validando a integridade da Clean Architecture, dos motores de radiometria física e do pipeline de detecção. O dataset atual (composto por apenas 52 imagens reais e 511 anotações) serviu estritamente para a validação operacional e funcional do pipeline de software e calibração de ponta a ponta. Registra-se explicitamente que os números de $\text{mAP@50} = 35.73\%$ e $\text{Recall} = 68.40\%$ reportados nesta fase são **preliminares e estão sujeitos a revisão substancial** quando o dataset ampliado estiver concluído e for submetido a retreinamento com convergência plena.
+
+Para mitigar o risco de contaminação do split original, foi projetado um particionamento independente por sobrevoo (*Flight-based Group Split* via [`scripts/create_independent_test_set.py`](../scripts/create_independent_test_set.py)), alocando voos inteiros exclusivamente para treino, validação e teste cego. No entanto, o teste de execução rápida registrado em `experiments/revalidation_2026/` (`run_revalidation_2026.py`) utilizou um modelo **distinto**, inicializado do zero e treinado por apenas 10 épocas em CPU com batch reduzido (4), alcançando $\text{mAP@50} = 5.32\%$ e $\text{mAP@50-95} = 2.23\%$. Como a curva de perda evidencia que o modelo **não convergiu**, essa métrica preliminar **não** representa o limite superior de desempenho da arquitetura em dados disjuntos, constituindo apenas uma validação funcional da infraestrutura de treino e avaliação.
+
+### 5.3. Coleta do Dataset Científico Definitivo (Meta de 1000 a 1200 Imagens) em Andamento
+Para a transição da prova de conceito para uma ferramenta de maturidade industrial plenamente validada em campo, a pesquisa estabelece formalmente os seguintes passos em andamento:
+1. **Campanha de Coleta do Dataset Definitivo em Andamento:** Está em andamento ativo a campanha de coleta, calibração e anotação padronizada para atingir a meta de **1.000 a 1.200 imagens térmicas reais** cobrindo diferentes usinas fotovoltaicas, horários de irradiância, estações do ano e condições de sujidade/vento, ampliando a variabilidade intraclasse e superando a amostragem piloto restrita de 52 imagens.
+2. **Retreinamento até Convergência:** Retreinar a arquitetura YOLOv11 com aceleração por hardware (GPU) por 100 épocas até a estabilização completa do gradiente e parada antecipada (*early stopping*) sob o split particionado por voo.
+3. **Avaliação Cega Conclusiva:** Realizar a inferência cega final sobre o conjunto de teste independente (Flight A, composto por 11 imagens e 140 anotações nunca vistas em nenhuma etapa de otimização), momento no qual os indicadores consolidados substituirão as medições preliminares desta versão piloto.
+
+---
+
+## 6. Artefatos Físicos e Reprodutibilidade
 
 Todos os resultados experimentais estão registrados e disponíveis para auditoria da banca avaliadora:
 - **Relatório PDF de Auditoria do Dataset:** `reports/dataset_audit_mestrado.pdf`
