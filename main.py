@@ -41,8 +41,9 @@ def run_system_check() -> int:
     print(f"[+] Idioma configurado: {cfg.language}")
     print(f"[+] Tema ativo: {cfg.theme}")
 
-    # Verificar banco de dados
+    # Verificar banco de dados e migração de dados legados
     settings.ensure_directories()
+    settings.migrate_legacy_data()
     db = DatabaseManager()
     db.initialize_schema()
     print(f"[+] Banco de dados SQLite operacional em: {settings.db_path}")
@@ -75,6 +76,7 @@ def main():
 
     logger.info(f"Iniciando {settings.app_name} v{settings.app_version}...")
     settings.ensure_directories()
+    settings.migrate_legacy_data()
 
     # Inicializar banco de dados SQLite
     db = DatabaseManager()
