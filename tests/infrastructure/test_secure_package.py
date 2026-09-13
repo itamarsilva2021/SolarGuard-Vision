@@ -319,6 +319,34 @@ class TestSecurityProtections:
             SecurePackageManager.extract_zip_buffer(bio.getvalue(), dest_dir)
         assert "Path Traversal bloqueada" in str(exc_info.value)
 
+    def test_zip_slip_string_prefix_sibling_directory_bypass_rejected(self, tmp_path: Path):
+        """
+        Teste de regressão: impede o bypass de Zip Slip onde o caminho de destino
+        é um diretório irmão cujo nome começa com o mesmo prefixo textual do target_dir
+        (ex.: target_dir='pacote' vs. dest_path='pacote_malicioso/arquivo.txt').
+        A checagem antiga str.startswith() aceitaria erroneamente; a checagem estrutural
+        is_relative_to() deve rejeitar com PermissionError.
+        """
+        target_dir = tmp_path / "pacote"
+        target_dir.mkdir()
+
+        # Entrada maliciosa que resolve para um irmão tmp_path / "pacote_malicioso" / "exploit.txt"
+        malicious_entry = "../pacote_malicioso/exploit.txt"
+
+        bio = io.BytesIO()
+        with zipfile.ZipFile(bio, "w") as zf:
+            zf.writestr(malicious_entry, b"conteudo_malicioso")
+
+        # Garante que o arquivo malicioso NÃO seja gravado e que lance PermissionError
+        with pytest.raises(PermissionError) as exc_info:
+            SecurePackageManager.extract_zip_buffer(bio.getvalue(), target_dir)
+
+        assert "Path Traversal bloqueada" in str(exc_info.value)
+
+        # Confirma que o diretório irmão invasor não foi criado nem populado
+        sibling_malicious_dir = tmp_path / "pacote_malicioso"
+        assert not sibling_malicious_dir.exists()
+
 
 class TestBackupServiceIntegration:
     """Integração dos pacotes seguros com o BackupService do SolarGuard Vision."""

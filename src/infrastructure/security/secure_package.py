@@ -161,9 +161,9 @@ class SecurePackageManager:
                 raise ValueError(f"Corrupção de integridade detectada no ZIP (CRC32 inválido em: {crc_err})")
 
             for info in zf.infolist():
-                # Proteção contra Zip Slip / Path Traversal
+                # Proteção estrutural contra Zip Slip / Path Traversal
                 dest_path = (target_dir / info.filename).resolve()
-                if not str(dest_path).startswith(str(target_dir)):
+                if not dest_path.is_relative_to(target_dir):
                     raise PermissionError(
                         f"Tentativa maliciosa de Path Traversal bloqueada: {info.filename}"
                     )
