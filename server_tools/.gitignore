@@ -1,0 +1,9 @@
+# Ignorar chaves privadas e arquivos gerados em server_tools
+keys/
+*.key
+*.pem
+*.priv
+*.lic
+.env*
+__pycache__/
+

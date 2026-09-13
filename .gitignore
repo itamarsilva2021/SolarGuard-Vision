@@ -27,10 +27,14 @@ data/*.key
 data/backups/
 data/updates/
 data/license.key
-data/license.lic
 data/.migrated_to_appdata
-# Ferramentas exclusivas de servidor (não versionar no repositório do cliente)
-server_tools/
+
+# Segredos e Chaves de Infraestrutura (manter chaves fora do Git, permitindo código de server_tools)
+server_tools/keys/
+*.key
+*.pem
+*.priv
+*.lic
 .env*
 
 # Logs e Diagnósticos Locais

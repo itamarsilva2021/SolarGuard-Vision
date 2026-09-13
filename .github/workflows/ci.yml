@@ -73,6 +73,7 @@ jobs:
       - name: Run Pytest with Coverage
         env:
           QT_QPA_PLATFORM: offscreen
+          SOLARGUARD_LICENSE_PRIV_KEY: "I7vycpa3hC/wXJ1AJ30YY6uYGN/j9a+hTpclIeQpU/8="
         run: |
           uv run pytest --cov=src --cov-report=xml --cov-report=term -v
 

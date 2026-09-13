@@ -2,6 +2,7 @@
 Configurações e fixtures globais do Pytest para a suíte de testes do SolarGuard Vision.
 """
 
+import os
 from pathlib import Path
 import pytest
 from datetime import datetime
@@ -10,6 +11,13 @@ from src.core.config import settings
 from src.domain.enums import AnomalyType, SeverityLevel, InspectionStatus
 from src.domain.value_objects import GeoCoordinate, DeltaT, BoundingBox, ThermalMatrixMeta
 from src.domain.entities import ThermalAnomaly, PVModule, ThermalImage, Inspection, Project
+
+# Garante que testes que emitem licenças (tests/infrastructure/test_asymmetric_license.py e
+# tests/production/test_production_readiness.py) tenham uma chave privada de teste configurada
+# mesmo em clones limpos (CI/CD) onde a pasta server_tools/keys/ não é versionada.
+if "SOLARGUARD_LICENSE_PRIV_KEY" not in os.environ:
+    os.environ["SOLARGUARD_LICENSE_PRIV_KEY"] = "I7vycpa3hC/wXJ1AJ30YY6uYGN/j9a+hTpclIeQpU/8="
+
 
 
 @pytest.fixture(autouse=True)
