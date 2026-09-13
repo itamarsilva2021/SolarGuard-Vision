@@ -14,8 +14,6 @@ from src.infrastructure.security.password_hasher import PasswordHasher
 
 logger = get_logger("UserService")
 
-DEFAULT_ADMIN_PASSWORD = "Admin@SolarGuard2026!"
-
 
 class UserService:
     """

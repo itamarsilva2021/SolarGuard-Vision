@@ -84,9 +84,30 @@ def mock_valid_license(monkeypatch):
     return fake_info
 
 
-def test_main_window_navigation(qapp, memory_db, mock_valid_license):
+@pytest.fixture
+def auth_session(memory_db):
+    """Gera uma sessão de usuário autenticada para permitir testes de navegação na interface."""
+    from src.infrastructure.database.repositories.sqlite_user_repository import SqliteUserRepository
+    from src.application.services.user_service import UserService
+    from src.application.services.session_service import SessionManager
+
+    user_repo = SqliteUserRepository(memory_db)
+    user_svc = UserService(user_repo)
+    user = user_svc.ensure_default_admin(
+        default_username="test_admin",
+        default_password="TestAdmin@2026!Nav",
+        default_name="Admin de Teste",
+    )
+    user.must_change_password = False
+    user_repo.save(user)
+    session_mgr = SessionManager(user_svc)
+    session_mgr.login("test_admin", "TestAdmin@2026!Nav")
+    return session_mgr
+
+
+def test_main_window_navigation(qapp, memory_db, mock_valid_license, auth_session):
     """Testa a troca de abas da barra lateral (Sidebar) e atualização visual com licença ativa."""
-    window = MainWindow(db_manager=memory_db)
+    window = MainWindow(db_manager=memory_db, session_manager=auth_session)
 
     # Inicialmente na primeira aba (Dashboard) quando licença está ativa
     assert window.stacked.currentIndex() == 0
@@ -105,7 +126,7 @@ def test_main_window_navigation(qapp, memory_db, mock_valid_license):
     window.close()
 
 
-def test_main_window_license_blocking_when_invalid(qapp, memory_db, monkeypatch):
+def test_main_window_license_blocking_when_invalid(qapp, memory_db, monkeypatch, auth_session):
     """Testa que MainWindow bloqueia navegação para abas de trabalho quando a licença for inválida."""
     from datetime import datetime, timezone
     from src.infrastructure.security.license_manager import LicenseInfo, LicenseType
@@ -122,7 +143,7 @@ def test_main_window_license_blocking_when_invalid(qapp, memory_db, monkeypatch)
     monkeypatch.setattr(LicenseManager, "check_current_license", lambda self: invalid_info)
     monkeypatch.setattr(QMessageBox, "warning", lambda *args, **kwargs: QMessageBox.StandardButton.Ok)
 
-    window = MainWindow(db_manager=memory_db)
+    window = MainWindow(db_manager=memory_db, session_manager=auth_session)
 
     # Bloqueio inicial: redireciona automaticamente para aba 5 (Licença)
     assert window.stacked.currentIndex() == 5
