@@ -12,7 +12,7 @@ project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.infrastructure.security.license_manager import LicenseType
-from src.infrastructure.security.license_issuer import LicenseIssuer
+from server_tools.license_issuer import LicenseIssuer
 
 
 def main():

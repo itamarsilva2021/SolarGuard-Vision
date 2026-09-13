@@ -31,6 +31,16 @@ class ImageImportService:
     """
 
     ALLOWED_EXTENSIONS: Set[str] = {".jpg", ".jpeg", ".png", ".tif", ".tiff"}
+    MAX_FILE_SIZE_MB: int = 100
+    MAX_IMAGE_DIMENSION: int = 12000
+
+    MAGIC_SIGNATURES: dict[str, list[bytes]] = {
+        ".jpg": [b"\xff\xd8\xff"],
+        ".jpeg": [b"\xff\xd8\xff"],
+        ".png": [b"\x89PNG\r\n\x1a\n"],
+        ".tif": [b"II*\x00", b"MM\x00*"],
+        ".tiff": [b"II*\x00", b"MM\x00*"],
+    }
 
     def __init__(
         self,
@@ -77,6 +87,62 @@ class ImageImportService:
             if ext not in self.ALLOWED_EXTENSIONS:
                 errors.append(
                     f"Extensão não suportada '{ext}' em {file_path.name}. Permitidos: JPG, PNG, TIFF."
+                )
+                continue
+
+            # A. Validação de tamanho em disco contra MAX_FILE_SIZE_MB
+            file_size_bytes = file_path.stat().st_size
+            max_size_bytes = self.MAX_FILE_SIZE_MB * 1024 * 1024
+            if file_size_bytes > max_size_bytes:
+                size_mb = file_size_bytes / (1024 * 1024)
+                errors.append(
+                    f"Arquivo '{file_path.name}' excede o tamanho máximo permitido de {self.MAX_FILE_SIZE_MB} MB ({size_mb:.2f} MB)."
+                )
+                continue
+
+            # B. Validação rápida de assinatura real (magic bytes)
+            try:
+                with open(file_path, "rb") as f:
+                    header_bytes = f.read(16)
+            except Exception as read_err:
+                errors.append(f"Não foi possível ler o arquivo '{file_path.name}': {read_err}")
+                continue
+
+            expected_sigs = self.MAGIC_SIGNATURES.get(ext, [])
+            if not any(header_bytes.startswith(sig) for sig in expected_sigs):
+                errors.append(
+                    f"Assinatura (magic bytes) inválida para '{file_path.name}'. O conteúdo não corresponde a uma imagem {ext.upper()}."
+                )
+                continue
+
+            # C. Validação estrutural e dimensional com PIL (ANTES de qualquer parsing pesado)
+            try:
+                with Image.open(file_path) as img:
+                    img_format = (img.format or "").upper()
+                    expected_formats = {
+                        ".jpg": {"JPEG"},
+                        ".jpeg": {"JPEG"},
+                        ".png": {"PNG"},
+                        ".tif": {"TIFF"},
+                        ".tiff": {"TIFF"},
+                    }
+                    if img_format not in expected_formats.get(ext, set()):
+                        errors.append(
+                            f"Formato interno da imagem '{file_path.name}' ({img_format}) diverge da extensão '{ext}'."
+                        )
+                        continue
+
+                    img_w, img_h = img.size
+                    if img_w > self.MAX_IMAGE_DIMENSION or img_h > self.MAX_IMAGE_DIMENSION:
+                        errors.append(
+                            f"Dimensões da imagem '{file_path.name}' ({img_w}x{img_h}) excedem o limite máximo permitido de {self.MAX_IMAGE_DIMENSION} pixels."
+                        )
+                        continue
+
+                    img.verify()
+            except Exception as img_err:
+                errors.append(
+                    f"Arquivo corrompido ou não é uma imagem válida: {file_path.name} ({img_err})"
                 )
                 continue
 

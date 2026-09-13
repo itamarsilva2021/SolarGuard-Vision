@@ -40,7 +40,7 @@ SolarGuard Vision/
 │   ├── infrastructure/        # Motores de Radiometria, YOLOv11, SQLite WAL, DJI e GIS
 │   └── presentation/          # Interface Gráfica Reativa em PySide6 (Qt)
 ├── docs/                      # Compêndio Documental Completo para Dissertação
-├── tests/                     # 240 Testes Automatizados (100% de Aprovação)
+├── tests/                     # 274 Testes Automatizados (100% de Aprovação)
 ├── .github/workflows/         # Pipeline de CI/CD (Ruff, MyPy, Pytest, Coverage)
 ├── uv.lock                    # Ambiente determinístico e reproduzível
 └── packaging/                 # Scripts de Empacotamento para Windows
@@ -84,14 +84,23 @@ python main.py
 
 ## 📊 Resultados Experimentais Reais (Mestrado)
 
-O modelo YOLOv11n foi treinado e avaliado com **100% de dados reais de campo** (sem dados simulados):
+O modelo YOLOv11n foi treinado e avaliado com **100% de dados reais de campo** (sem dados simulados), sob avaliação científica com pareamento guloso por IoU ($\ge 0.45$) e contabilização estrita da classe `background` (conforme detalhado em [`docs/AUDIT_FIX_EVALUATION.md`](docs/AUDIT_FIX_EVALUATION.md)):
 
 - **Imagens Reais de Usinas:** 52 imagens
 - **Anotações de Falhas Íntegras:** 511 instâncias reais auditadas
-- **mAP Global (@50):** 35.73% (com classe `panel with hotspots` atingindo **68.40%**)
+- **mAP Global (@50):** **35.73%** (com classe `panel with hotspots` atingindo **68.40%**)
+- **mAP Global (@50-95):** **27.48%**
 - **Revocação (Recall):** **68.40%**
-- **Acurácia Global na Validação:** **100.00%** (0% de confusão cruzada)
+- **Acurácia Pareada Estrita ($\text{IoU} \ge 0.45$):** **0.00%** (avaliação realista com penalização por falsos negativos/omissões espaciais de `background`, eliminando o bug metodológico anterior que inflava artificialmente a acurácia para 100%)
 - **Tempo de Inferência:** $82.8\text{ ms}$ por imagem em CPU ($> 65\text{ FPS}$ em GPU)
+
+### ⚠️ Limitações Metodológicas e Ameaças à Validade
+
+Para assegurar integridade científica e rigor metodológico na dissertação de mestrado, o leitor e a banca examinadora devem considerar os seguintes apontamentos críticos sobre os números acima:
+
+1. **Particionamento Original e Risco de Contaminação Espacial:** O benchmark oficial de $\text{mAP@50} = 35.73\%$ foi obtido sob a partição original do dataset (`datasets/thermal_pv_mestrado/`), na qual os diretórios `val` e `test` apontavam para a mesma pasta e a divisão não isolava os sobrevoos de drone (*flights*). Conforme auditado em [`docs/DATASET_SPLIT_AUDIT.md`](docs/DATASET_SPLIT_AUDIT.md), capturas sequenciais de um mesmo voo possuem correlação angular, térmica e espacial, criando risco de dependência entre treino e validação.
+2. **Estágio Atual como Piloto Operacional / Prova de Conceito:** Os resultados obtidos refletem uma fase de **piloto operacional e prova de conceito quanto à maturidade da métrica de IA**, demonstrando a viabilidade da integração entre radiometria física e visão computacional. O dataset atual (composto por 52 imagens) serviu apenas para validação operacional do pipeline, de modo que os números de $\text{mAP@50}$ e $\text{Recall}$ reportados nesta fase são **preliminares e sujeitos a revisão substancial** quando o dataset ampliado estiver disponível. Uma tentativa de revalidação preliminar em split independente por voo (`experiments/revalidation_2026/`, via `run_revalidation_2026.py`) utilizou um modelo distinto, treinado do zero por apenas 10 épocas em CPU com batch size 4, obtendo $\text{mAP@50} = 5.32\%$ por **não ter convergido**. Esse resultado preliminar não representa o desempenho real da arquitetura, atuando unicamente como validação funcional do pipeline de software.
+3. **Coleta do Dataset Definitivo em Andamento (Meta de 1000 a 1200 imagens):** A consolidação definitiva do modelo para operação industrial exige a expansão amostral do corpus termográfico, estando em andamento a **meta de coleta e anotação padronizada de 1.000 a 1.200 imagens térmicas** distribuídas em múltiplos sobrevoos, usinas e condições climáticas. Com essa base ampliada, será realizado o retreinamento completo em GPU com parada antecipada sob particionamento estritamente disjunto por voo e avaliação final no conjunto de teste cego independente.
 
 ---
 

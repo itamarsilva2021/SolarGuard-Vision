@@ -30,10 +30,33 @@ O SolarGuard Vision disponibiliza um instalador automatizado para Windows que di
 2. Execute o instalador com privilégios de administrador.
 3. Siga as etapas do assistente:
    - Aceite os termos de licença de uso da versão de pesquisa;
-   - Escolha o diretório de destino (padrão: `C:\Program Files\SolarGuard Vision`);
+   - Escolha o diretório de destino dos binários da aplicação (padrão: `C:\Program Files\SolarGuard Vision`);
    - Marque a opção de criar atalho na Área de Trabalho e no Menu Iniciar.
 4. Conclua a instalação e marque a opção **Iniciar o SolarGuard Vision**.
-5. No primeiro início, o sistema gerará o banco de dados inicial e a chave de avaliação de 14 dias vinculada ao HWID da máquina.
+5. **Estrutura de Armazenamento por Usuário (Isolamento e Segurança Windows):**
+   - Para garantir total compatibilidade com o controle de contas de usuário (UAC) do Windows e evitar falhas de permissão de escrita em `C:\Program Files`, o SolarGuard Vision utiliza a biblioteca `platformdirs`.
+   - Todos os dados mutáveis são armazenados de forma isolada por usuário em:
+     ```
+     %LOCALAPPDATA%\SolarGuardVision\SolarGuardVision\
+     ├── data\
+     │   ├── solarguard.sqlite3      (Banco de dados relacional e anomalias)
+     │   ├── license.key             (Licença assinada assimetricamente)
+     │   ├── settings.json           (Preferências operacionais)
+     │   └── backups\                (Backups automatizados e criptografados)
+     ├── models\                     (Pesos neurais YOLOv11)
+     ├── reports\                    (Laudos técnicos em PDF e gráficos)
+     └── logs\                       (Registros rotativos de auditoria e crashes)
+     ```
+6. **Migração Automática Retrocompatível:**
+   - Caso o sistema detecte uma pasta `data/` legada no diretório de execução de versões anteriores, os dados (banco SQLite, chave de licença, preferências, logs e modelos) são automaticamente migrados para o diretório de usuário correspondente na primeira inicialização, com registro detalhado nos logs.
+7. **Primeiro Acesso do Administrador e Troca Obrigatória de Senha:**
+   - O sistema cria automaticamente o usuário padrão `admin` com uma **senha aleatória forte e exclusiva** gerada por `secrets` (criptografada via Argon2id).
+   - A senha temporária é exibida **uma única vez** no console e salva no arquivo local temporário:
+     ```
+     %LOCALAPPDATA%\SolarGuardVision\SolarGuardVision\data\admin_first_login.txt
+     ```
+   - No primeiro login, a aplicação intercepta o acesso e exige a definição de uma nova senha pessoal (mínimo de 12 caracteres).
+   - Após a alteração bem-sucedida, o arquivo `admin_first_login.txt` é **removido automaticamente** e o acesso pleno ao painel é liberado.
 
 ---
 

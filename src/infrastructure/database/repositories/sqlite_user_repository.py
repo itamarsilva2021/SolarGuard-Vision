@@ -21,9 +21,9 @@ class SqliteUserRepository(IUserRepository):
         sql = """
             INSERT INTO users (
                 id, username, password_hash, salt, full_name, email, role,
-                is_active, last_login, created_at
+                is_active, must_change_password, failed_login_attempts, locked_until, lockout_count, last_login, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 username = excluded.username,
                 password_hash = excluded.password_hash,
@@ -32,9 +32,14 @@ class SqliteUserRepository(IUserRepository):
                 email = excluded.email,
                 role = excluded.role,
                 is_active = excluded.is_active,
+                must_change_password = excluded.must_change_password,
+                failed_login_attempts = excluded.failed_login_attempts,
+                locked_until = excluded.locked_until,
+                lockout_count = excluded.lockout_count,
                 last_login = excluded.last_login;
         """
         last_login_str = user.last_login.isoformat() if user.last_login else None
+        locked_until_str = user.locked_until.isoformat() if user.locked_until else None
 
         with self._db.transaction() as conn:
             conn.execute(
@@ -48,6 +53,10 @@ class SqliteUserRepository(IUserRepository):
                     user.email,
                     user.role.value,
                     1 if user.is_active else 0,
+                    1 if user.must_change_password else 0,
+                    user.failed_login_attempts,
+                    locked_until_str,
+                    user.lockout_count,
                     last_login_str,
                     user.created_at.isoformat(),
                 ),

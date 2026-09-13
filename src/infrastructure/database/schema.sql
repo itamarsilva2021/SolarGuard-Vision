@@ -118,6 +118,10 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT,
     role TEXT NOT NULL DEFAULT 'inspector',
     is_active INTEGER NOT NULL DEFAULT 1,
+    must_change_password INTEGER NOT NULL DEFAULT 0,
+    failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until TEXT,
+    lockout_count INTEGER NOT NULL DEFAULT 0,
     last_login TEXT,
     created_at TEXT NOT NULL
 );

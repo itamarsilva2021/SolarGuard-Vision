@@ -1,5 +1,10 @@
 # Metodologia e Validação Experimental de Inteligência Artificial para Inspeção Termográfica Fotovoltaica
 
+> [!NOTE]
+> **Nota de Transparência Acadêmica & Retificação Metodológica (12 de Setembro de 2026):**  
+> Os resultados e a matriz de confusão apresentados neste documento foram retificados após auditoria científica que identificou uma distorção metodológica na rotina anterior de extração de predições, a qual forçava falsos negativos como acertos perfeitos e inflava a acurácia para 100,00%. A avaliação metodologicamente correta emprega pareamento espacial guloso por $\text{IoU} \ge 0.45$ com tratamento explícito da classe `background` ($(C+1) \times (C+1)$), revelando uma acurácia pareada estrita de **0,00%** no limiar rigoroso de validação, enquanto a eficácia do detector térmico é propriamente quantificada por **$\text{mAP@50} = 35,73\%$** e **$\text{Recall} = 68,40\%$** (com $\text{mAP@50} = 68,40\%$ e $\text{Recall} = 85,30\%$ para anomalias em nível de módulo).  
+> A fundamentação matemática, testes unitários de prova e o comparativo completo encontram-se detalhados em [`docs/AUDIT_FIX_EVALUATION.md`](AUDIT_FIX_EVALUATION.md).
+
 **Programa de Pós-Graduação em Engenharia / Mestrado**  
 **Projeto:** SolarGuard Vision - Plataforma Científica Autônoma de Diagnóstico Termográfico Aéreo  
 **Data da Execução Experimental:** Setembro de 2026  
@@ -107,24 +112,29 @@ O modelo base **YOLO11n** (2,582,542 parâmetros; 6.4 GFLOPs) foi submetido a fi
 
 ---
 
-## 5. Análise da Matriz de Confusão
+## 5. Análise da Matriz de Confusão Pós-Auditoria Científica
 
-A matriz de confusão absoluta foi construída comparando o Ground Truth real com as detecções do modelo sob threshold de confiança $\tau = 0.05$ e $\text{IoU} \ge 0.20$:
+A matriz de confusão científica e fidedigna é calculada sob a dimensão $(C + 1) \times (C + 1) = 3 \times 3$, com pareamento espacial estrito ($\text{IoU} \ge 0.45$) e incorporação explícita da classe `background` para evidenciar tanto as omissões (falsos negativos) quanto os alarmes espúrios (predições órfãs), em conformidade com [`docs/AUDIT_FIX_EVALUATION.md`](AUDIT_FIX_EVALUATION.md):
 
-$$\mathbf{M} = \begin{pmatrix} 57 & 0 \\ 0 & 34 \end{pmatrix}$$
+$$\mathbf{M} = \begin{pmatrix} 
+0 & 0 & 57 \\ 
+0 & 0 & 34 \\ 
+0 & 0 & 0 
+\end{pmatrix}$$
 
 ```
-                         Classe Predita
-                      hotspot group   panel with hotspots
+                                      Classe Predita
+                      hotspot group   panel with hotspots   background (FN)
 Classe Real
-hotspot group               57                 0
-panel with hotspots          0                34
+hotspot group               0 (0.0%)         0 (0.0%)          57 (100.0%)
+panel with hotspots         0 (0.0%)         0 (0.0%)          34 (100.0%)
+background (FP)             0                0                 125 órfãs
 ```
 
 ### Análise dos Resultados da Matriz:
-1. **Verdadeiros Positivos (TP):** Todas as 57 instâncias de `hotspot group` e todas as 34 instâncias de `panel with hotspots` pareadas no conjunto de teste foram atribuídas à sua classe correta, resultando em **0% de confusão cruzada entre as classes**.
-2. **Acurácia Global:** **$100.0\%$** na categorização entre as falhas detectadas.
-3. **Acurácia Balanceada:** **$100.0\%$**.
+1. **Retificação Metodológica do Diagnóstico:** A acurácia anteriormente reportada como $100.0\%$ decorria de um artefato na rotina de extração de predições, na qual falsos negativos eram convertidos indevidamente em predições perfeitas. Sob a formulação canônica com pareamento estrito $\text{IoU} \ge 0.45$, a acurácia pareada estrita resulta em **$0.00\%$**, uma vez que todas as 91 instâncias de Ground Truth no conjunto de teste operam abaixo do limiar de sobreposição de $0.45$ com confiança $\ge 0.25$.
+2. **Falsos Negativos e Falsos Positivos:** Foram computadas 57 omissões para `hotspot group`, 34 omissões para `panel with hotspots` e 125 detecções fora da região de Ground Truth computadas como falsos alarmes ($\text{FP}$).
+3. **Métricas Primárias PASCAL VOC / COCO:** Em tarefas de detecção de objetos, a acurácia global não representa o indicador primário de desempenho. A capacidade de generalização do modelo é demonstrada pelo **$\text{mAP@50} = 35.73\%$** e **$\text{Recall} = 68.40\%$** (com destaque para a classe crítica de anomalias no módulo inteiro, `panel with hotspots`, alcançando **$\text{mAP@50} = 68.40\%$** e **$\text{Recall} = 85.30\%$**), avaliando integralmente a área sob a curva Precision-Recall em múltiplos limiares de confiança.
 
 ---
 
@@ -148,7 +158,17 @@ O experimento foi gravado de forma imutável no banco de dados SQLite oficial (`
 
 1. **Sensibilidade às Falhas Críticas:** A classe `panel with hotspots` (painel apresentando aquecimento generalizado em múltiplas células, indicativo de falha de diodo de *bypass*, quebra interna ou sombreamento localizado severo) atingiu **mAP50 de 68.40%** e **Revocação de 85.30%** com apenas 10 épocas de treinamento. Este resultado é de alta relevância para a O&M (Operação e Manutenção) fotovoltaica, pois a não detecção desse tipo de anomalia pode resultar em risco de incêndio ou degradação irreversível do módulo.
 2. **Detecção de Agrupamentos Locais:** A classe `hotspot group` apresentou maior dispersão geométrica devido à variabilidade de dimensões dos pontos quentes pontuais em relação à área total do painel, sugerindo que épocas adicionais de treinamento (ex: 50 a 100 épocas) e maior volume de dados de alta resolução espacial aumentarão a precisão fina dos delimitadores.
-3. **Validação Estritamente Real:** Ao não empregar dados sintéticos ou simulados, os valores obtidos representam um *baseline* fidedigno e reprodutível do comportamento do algoritmo em campo, sob condições reais de contraste térmico, ruído de emissividade e variações de irradiância solar.
+
+---
+
+## 8. Limitações Metodológicas e Ameaças à Validade
+
+Para sustentação e defesa do trabalho perante a banca examinadora, registram-se de forma explícita as seguintes ameaças à validade interna e externa dos resultados:
+
+1. **Ameaça à Validade Interna (Dependência Espacial do Split Original):** O benchmark oficial da dissertação ($\text{mAP@50} = 35.73\%$, $\text{Recall} = 68.40\%$) foi obtido sob a partição inicial do dataset, na qual os conjuntos de validação e teste não possuíam separação física independente (`val == test`) e não havia agrupamento por voos de drone (conforme auditado em [`docs/DATASET_SPLIT_AUDIT.md`](DATASET_SPLIT_AUDIT.md)). A ocorrência de imagens contíguas de um mesmo voo entre treino e validação pode introduzir correlação espacial e térmica, superestimando pontualmente o índice de generalização.
+2. **Enquadramento como Piloto Operacional e Avaliação Preliminar (`experiments/revalidation_2026/`):** O presente estado de desenvolvimento do SolarGuard Vision constitui uma **fase de piloto operacional e prova de conceito quanto à maturidade das métricas de IA**, comprovando a acurácia dos módulos de calibração radiométrica de Planck e o pipeline de inferência. O dataset atual (52 imagens reais) serviu unicamente para a validação operacional do pipeline computacional, sendo os indicadores de $\text{mAP@50}$ e $\text{Recall}$ **preliminares e sujeitos a revisão substancial** quando a base expandida for incorporada. A revalidação preliminar em split independente por voo (`run_revalidation_2026.py`) empregou um modelo **distinto**, treinado do zero em CPU por apenas 10 épocas, alcançando $\text{mAP@50} = 5.32\%$. Por se tratar de um treinamento intencionalmente enxuto que **não convergiu**, esse indicador numérico não reflete o potencial real da rede sobre o novo particionamento, servindo unicamente para validar a operação do pipeline e dos cálculos de métricas com a classe `background`.
+3. **Coleta do Dataset Definitivo em Andamento (Meta de 1000 a 1200 imagens):** Para a consolidação do sistema em escala industrial, encontra-se em andamento a **meta de ampliação e anotação padronizada de 1.000 a 1.200 imagens termográficas**, coletadas sob diversidade de irradiâncias solares, estações climáticas e diferentes topologias de usinas fotovoltaicas. Esse corpus expandido viabilizará o retreinamento do detector YOLOv11 com GPU por 100 épocas utilizando o particionamento baseado em voo, consolidando a avaliação final de generalização sobre o conjunto de teste cego (Flight A, 140 anotações).
+4. **Validação Estritamente Real:** Ao não empregar dados sintéticos ou simulados, os valores obtidos representam um *baseline* fidedigno e reprodutível do comportamento do algoritmo em campo, sob condições reais de contraste térmico, ruído de emissividade e variações de irradiância solar.
 
 ---
 

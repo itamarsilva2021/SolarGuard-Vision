@@ -189,6 +189,24 @@ class LoginDialog(QDialog):
 
         res = self.session_manager.login(username, password)
         if res.is_success:
+            user = res.value
+            if user.must_change_password:
+                # Força a exibição do diálogo de troca de senha
+                from src.presentation.force_password_change_dialog import ForcePasswordChangeDialog
+                change_dlg = ForcePasswordChangeDialog(
+                    user=user,
+                    user_service=self.session_manager.user_service,
+                    parent=self,
+                    preset_current_password=password,
+                )
+                if change_dlg.exec() != QDialog.Accepted:
+                    # Se o usuário cancelou a troca obrigatória de senha, desloga e rejeita
+                    self.session_manager.logout()
+                    self.login_btn.setEnabled(True)
+                    self.login_btn.setText("Acessar Sistema")
+                    self._show_error("A troca de senha é obrigatória para prosseguir.")
+                    return
+
             self.error_label.setVisible(False)
             self.accept()
         else:

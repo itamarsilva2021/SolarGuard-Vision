@@ -14,7 +14,7 @@ from src.infrastructure.database.connection import DatabaseManager
 from src.infrastructure.database.repositories.sqlite_user_repository import SqliteUserRepository
 from src.infrastructure.security.password_hasher import PasswordHasher
 from src.infrastructure.security.license_manager import LicenseManager, LicenseType
-from src.infrastructure.security.license_issuer import LicenseIssuer
+from server_tools.license_issuer import LicenseIssuer
 from src.infrastructure.config.settings_manager import SettingsManager, AppSettings
 from src.infrastructure.storage.backup_service import BackupService
 from src.infrastructure.updater.update_manager import UpdateManager

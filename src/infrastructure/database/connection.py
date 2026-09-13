@@ -81,7 +81,7 @@ class DatabaseManager:
                 conn.close()
 
     def initialize_schema(self) -> None:
-        """Executa o script DDL schema.sql para criar tabelas e índices se não existirem."""
+        """Executa o script DDL schema.sql para criar tabelas e índices se não existirem e aplica migrações."""
         schema_path = Path(__file__).parent / "schema.sql"
         if not schema_path.exists():
             raise FileNotFoundError(f"Arquivo de schema SQL não encontrado em: {schema_path}")
@@ -89,6 +89,26 @@ class DatabaseManager:
         schema_sql = schema_path.read_text(encoding="utf-8")
         with self.transaction() as conn:
             conn.executescript(schema_sql)
+            
+            # Migração retrocompatível para tabelas existentes
+            try:
+                cursor = conn.execute("PRAGMA table_info(users);")
+                columns = [row[1] for row in cursor.fetchall()]
+                if "must_change_password" not in columns:
+                    conn.execute("ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0;")
+                    logger.info("Migração de schema aplicada: coluna 'must_change_password' adicionada à tabela 'users'.")
+                if "failed_login_attempts" not in columns:
+                    conn.execute("ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0;")
+                    logger.info("Migração de schema aplicada: coluna 'failed_login_attempts' adicionada à tabela 'users'.")
+                if "locked_until" not in columns:
+                    conn.execute("ALTER TABLE users ADD COLUMN locked_until TEXT;")
+                    logger.info("Migração de schema aplicada: coluna 'locked_until' adicionada à tabela 'users'.")
+                if "lockout_count" not in columns:
+                    conn.execute("ALTER TABLE users ADD COLUMN lockout_count INTEGER NOT NULL DEFAULT 0;")
+                    logger.info("Migração de schema aplicada: coluna 'lockout_count' adicionada à tabela 'users'.")
+            except Exception as ex:
+                logger.warning(f"Erro ao verificar migrações da tabela users: {ex}")
+
         logger.info(f"Schema do banco de dados inicializado com sucesso em: {self.db_path}")
 
     def close(self) -> None:

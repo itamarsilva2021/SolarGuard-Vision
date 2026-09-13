@@ -1,13 +1,50 @@
 # Notas de Lançamento (Release Notes)
 
-## SolarGuard Vision v1.0 (Research Edition)
-**Data de Publicação:** 10 de Setembro de 2026  
-**Build:** 1.0.0-research+20260910  
-**Status:** Versão Científica Oficial Homologada para Dissertação de Mestrado  
+## SolarGuard Vision v1.0.1 (Security Hardening & Scientific Audit Edition)
+**Data de Publicação:** 12 de Setembro de 2026  
+**Build:** 1.0.1-audit+20260912  
+**Status:** Versão Homologada com Auditoria Científica e Hardening de Segurança  
 
 ---
 
-### 🌟 Destaques da Versão
+### 🌟 Destaques da Versão v1.0.1
+
+1. **Correção Metodológica na Avaliação Científica de IA:**
+   - Eliminação da anomalia metodológica que forçava falsos negativos como predições perfeitas e inflava a acurácia para 100,00%.
+   - Implementação do pareamento guloso com limiar estrito de sobreposição espacial ($\text{IoU} \ge 0.45$) e matriz de confusão $3 \times 3$ com classe explícita `background`.
+   - Retificação transparente: a acurácia pareada estrita é de **0,00%** (sob penalização estrita de omissões espaciais), enquanto o desempenho do detector é referenciado pelas métricas primárias internacionais PASCAL VOC/COCO: **$\text{mAP@50} = 35.73\%$** e **$\text{Recall} = 68.40\%$** (com destaque para a classe crítica de módulo `panel with hotspots` atingindo **$\text{mAP@50} = 68.40\%$** e **$\text{Recall} = 85.30\%$**).
+   - Documentação de auditoria completa registrada em [`docs/AUDIT_FIX_EVALUATION.md`](docs/AUDIT_FIX_EVALUATION.md).
+   - **Nota de Limitações Metodológicas e Ameaças à Validade:** Registra-se que o benchmark acima decorre da partição original do dataset (sem isolamento de sobrevoos de drone e com `val == test`, conforme [`docs/DATASET_SPLIT_AUDIT.md`](docs/DATASET_SPLIT_AUDIT.md)). O estágio atual do sistema é enquadrado como **piloto operacional e prova de conceito quanto à maturidade da métrica de IA**, servindo o dataset piloto atual (52 imagens) unicamente para a validação operacional do pipeline. Deste modo, as métricas reportadas são **preliminares e sujeitas a revisão substancial** após a conclusão da expansão amostral. A revalidação preliminar em split independente por voo (`experiments/revalidation_2026/`) utilizou modelo distinto treinado por apenas 10 épocas em CPU que não convergiu ($\text{mAP@50} = 5.32\%$), servindo como validação funcional do software. Encontra-se em andamento a campanha para a meta de **1.000 a 1.200 imagens térmicas**, cujo retreinamento em GPU e teste cego no Flight A consolidarão os índices definitivos.
+
+2. **Migração de Autenticação para Argon2id (RFC 9106):**
+   - Adoção de **Argon2id** como algoritmo padrão de hash de senhas (64 MiB RAM, 3 iterações, 4 lanes paralelas, sal criptográfico de 16 bytes).
+   - Implementação de política de segurança com tamanho mínimo de **12 caracteres**.
+   - Migração transparente e automática: hashes legados PBKDF2-HMAC-SHA256 são convertidos para Argon2id no momento do login bem-sucedido.
+
+3. **Segregação Criptográfica de Chaves Ed25519 (RFC 8032):**
+   - Separação completa e estrita entre as autoridades de **Licenciamento** e de **Atualização de Software** (uso de pares de chaves assimétricas independentes).
+   - Expulso absoluto de chaves privadas do repositório do cliente: carregamento via variável de ambiente `SOLARGUARD_LICENSE_PRIV_KEY` ou cofre de segredos.
+   - Saneamento do histórico do Git com `git-filter-repo`, eliminando chaves expostas e protegendo ferramentas de servidor no `.gitignore`.
+
+4. **Blindagem do Mecanismo de Atualização (`UpdateManager`):**
+   - Restrição estrita de downloads a conexões criptografadas **HTTPS** com TLS em ambiente de produção.
+   - Bloqueio automático de `http://`, `file://` e caminhos locais/UNC, com suporte a `allow_local_source=True` restrito a testes automatizados.
+   - Validação imediata de integridade via digest SHA-256 e proteção pré-execução anti-TOCTOU.
+
+5. **Engenharia de Software e Testes:**
+   - **274 Testes Automatizados** cobrindo todas as camadas (100% de aprovação).
+   - Ambiente reprodutível com `uv.lock`.
+
+---
+
+## SolarGuard Vision v1.0 (Research Edition)
+**Data de Publicação:** 10 de Setembro de 2026  
+**Build:** 1.0.0-research+20260910  
+**Status:** Versão Científica Inicial para Dissertação de Mestrado  
+
+---
+
+### 🌟 Destaques da Versão v1.0
 
 1. **Camada Científica de Radiometria Físico-Matemática:**
    - Implementação da equação de Planck inversa com calibração de fábrica por perfis de câmera.
@@ -23,7 +60,7 @@
 3. **Inteligência Artificial YOLOv11 & Validação Real:**
    - Fine-tuning do modelo YOLOv11 com pesos `best.pt` em imagens termográficas reais de usinas solares.
    - Suporte a polígonos de segmentação com conversão dinâmica para bounding boxes.
-   - Matriz de confusão com acurácia de 100% e ausência total de confusão cruzada entre classes.
+   - Avaliação experimental em dados reais de campo com $\text{mAP@50} = 35.73\%$ e $\text{Recall} = 68.40\%$ (revisados na v1.0.1).
    - Rastreabilidade integral de experimentos e persistência na tabela `ai_experiments`.
 
 4. **Mapeamento Topológico Geoespacial:**
@@ -40,14 +77,14 @@
 
 ---
 
-### 🛠️ Estatísticas de Engenharia de Software
-- **Total de Testes Automatizados:** 240 testes (100% de aprovação).
+### 🛠️ Estatísticas de Engenharia de Software (v1.0 Baseline)
+- **Total de Testes Automatizados:** 240 testes (100% de aprovação no baseline v1.0).
 - **Cobertura Arquitetural:** 4 camadas estritas da Clean Architecture.
 - **Banco de Dados:** SQLite com modo WAL e integridade referencial ativada.
 - **Segurança e Licenciamento:**
-  - Autenticação e sessões com hash criptográfico PBKDF2-HMAC-SHA256.
-  - Licenciamento assimétrico **Ed25519 (RFC 8032)** com par de chaves públicas/privadas.
-  - Proibição absoluta de geração local de licenças na aplicação cliente.
-  - Bloqueio estrito de execução (`license invalid => bloqueia uso`) via guarda de inicialização e interface.
-  - Vinculação de hardware por impressão digital (HWID) baseada em SHA-256.
+   - Autenticação de usuários (suporte legado a PBKDF2-HMAC-SHA256, atualizado para Argon2id na v1.0.1).
+   - Licenciamento assimétrico **Ed25519 (RFC 8032)** com par de chaves públicas/privadas.
+   - Proibição absoluta de geração local de licenças na aplicação cliente.
+   - Bloqueio estrito de execução (`license invalid => bloqueia uso`) via guarda de inicialização e interface.
+   - Vinculação de hardware por impressão digital (HWID) baseada em SHA-256.
 

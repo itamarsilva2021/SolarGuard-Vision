@@ -2,12 +2,64 @@
 Configurações e fixtures globais do Pytest para a suíte de testes do SolarGuard Vision.
 """
 
+import os
+from pathlib import Path
 import pytest
 from datetime import datetime
 
+from src.core.config import settings
 from src.domain.enums import AnomalyType, SeverityLevel, InspectionStatus
 from src.domain.value_objects import GeoCoordinate, DeltaT, BoundingBox, ThermalMatrixMeta
 from src.domain.entities import ThermalAnomaly, PVModule, ThermalImage, Inspection, Project
+
+# Garante que testes que emitem licenças (tests/infrastructure/test_asymmetric_license.py e
+# tests/production/test_production_readiness.py) tenham uma chave privada de teste configurada
+# mesmo em clones limpos (CI/CD) onde a pasta server_tools/keys/ não é versionada.
+if "SOLARGUARD_LICENSE_PRIV_KEY" not in os.environ:
+    os.environ["SOLARGUARD_LICENSE_PRIV_KEY"] = "I7vycpa3hC/wXJ1AJ30YY6uYGN/j9a+hTpclIeQpU/8="
+
+
+
+@pytest.fixture(autouse=True)
+def isolate_settings_directories(tmp_path: Path):
+    """
+    Garante que os testes não poluam o diretório de dados real (%APPDATA% do usuário),
+    redirecionando todos os caminhos do singleton settings para pastas temporárias limpas.
+    """
+    orig_base = settings.base_dir
+    orig_data = settings.data_dir
+    orig_db = settings.db_path
+    orig_models = settings.models_dir
+    orig_reports = settings.reports_dir
+    orig_cache = settings.cache_dir
+    orig_logs = settings.logs_dir
+
+    test_base = tmp_path / "sg_test_env"
+    test_data = test_base / "data"
+    test_db = test_data / "solarguard.sqlite3"
+    test_models = test_base / "models"
+    test_reports = test_base / "reports"
+    test_cache = test_base / "cache"
+    test_logs = test_base / "logs"
+
+    settings.base_dir = test_base
+    settings.data_dir = test_data
+    settings.db_path = test_db
+    settings.models_dir = test_models
+    settings.reports_dir = test_reports
+    settings.cache_dir = test_cache
+    settings.logs_dir = test_logs
+    settings.ensure_directories()
+
+    yield
+
+    settings.base_dir = orig_base
+    settings.data_dir = orig_data
+    settings.db_path = orig_db
+    settings.models_dir = orig_models
+    settings.reports_dir = orig_reports
+    settings.cache_dir = orig_cache
+    settings.logs_dir = orig_logs
 
 
 @pytest.fixture

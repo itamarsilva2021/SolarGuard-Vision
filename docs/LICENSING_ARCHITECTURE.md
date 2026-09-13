@@ -42,14 +42,26 @@ Para mitigar esse risco de forma definitiva, o SolarGuard Vision implementa uma 
 ```
 
 ### 2.1 Servidor (Autoridade de Emissão - `LicenseIssuer`)
-- **Detenção da Chave Privada (`Ed25519PrivateKey`):** A chave privada permanece sob posse exclusiva da autoridade de licenciamento do SolarGuard Vision.
-- **Responsabilidade:** Único componente autorizado a gerar e assinar tokens criptográficos.
-- **Isolamento:** Localizado em [`src/infrastructure/security/license_issuer.py`](file:///d:/OneDrive/AREA%20DE%20TRABALHO%20WINDOWS%2011/Documentos/ThermoPV%20AI/src/infrastructure/security/license_issuer.py) e utilitário CLI [`scripts/issue_license.py`](file:///d:/OneDrive/AREA%20DE%20TRABALHO%20WINDOWS%2011/Documentos/ThermoPV%20AI/scripts/issue_license.py).
+- **Detenção da Chave Privada (`Ed25519PrivateKey`):** A chave privada de licenciamento permanece sob posse exclusiva da autoridade de licenciamento do SolarGuard Vision.
+- **Responsabilidade:** Único componente autorizado a gerar e assinar tokens criptográficos de licença.
+- **Isolamento Físico de Código:** Localizado estritamente em [`server_tools/license_issuer.py`](file:///d:/OneDrive/AREA%20DE%20TRABALHO%20WINDOWS%2011/Documentos/ThermoPV%20AI/server_tools/license_issuer.py) e utilitário CLI [`scripts/issue_license.py`](file:///d:/OneDrive/AREA%20DE%20TRABALHO%20WINDOWS%2011/Documentos/ThermoPV%20AI/scripts/issue_license.py). O diretório `server_tools/` fica **fora da árvore do cliente** (`src/`), sendo completamente excluído do empacotamento industrial (PyInstaller).
 
 ### 2.2 Cliente Desktop (`LicenseManager`)
-- **Detenção da Chave Pública (`Ed25519PublicKey`):** O aplicativo desktop instalado nas estações de trabalho detém **unicamente a chave pública oficial** (32 bytes em Base64).
-- **Proibição Estrita de Geração Local:** O cliente não possui o método `generate_license_key` nem qualquer acesso à chave privada. É matematicamente impossível para o cliente gerar uma licença válida para si mesmo.
+- **Detenção da Chave Pública (`Ed25519PublicKey`):** O aplicativo desktop instalado nas estações de trabalho detém **unicamente a chave pública oficial de licenciamento** (`DEFAULT_PUBLIC_KEY_B64` em `src/infrastructure/security/license_manager.py`).
+- **Proibição Estrita de Geração Local:** O cliente não possui o método de emissão nem qualquer acesso à chave privada. É matematicamente impossível para o cliente gerar uma licença válida para si mesmo.
 - **Validação Pura:** O cliente atua estritamente como um validador assimétrico.
+
+### 2.3 Segregação Estrita de Domínios Criptográficos (Licenciamento vs. Atualização)
+Para evitar o colapso de segurança por chave única (*single point of compromise*), o SolarGuard Vision adota **pares de chaves Ed25519 totalmente segregados e independentes**:
+
+1. **Par de Licenciamento:**
+   - **Chave Privada:** Reside exclusivamente no servidor (`server_tools/license_issuer.py` ou variável `SOLARGUARD_LICENSE_PRIV_KEY`).
+   - **Chave Pública:** Incorporada no cliente (`src/infrastructure/security/license_manager.py`).
+2. **Par de Atualização de Software:**
+   - **Chave Privada:** Reside exclusivamente no pipeline de CI/CD e release seguro (`UpdateManifestSigner`).
+   - **Chave Pública:** Incorporada no cliente (`src/infrastructure/updater/update_manager.py`).
+
+Desta forma, um eventual comprometimento operacional de uma chave em um domínio nunca afeta o outro domínio.
 
 ---
 

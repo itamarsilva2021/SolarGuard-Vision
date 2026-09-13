@@ -60,7 +60,7 @@ from src.infrastructure.database.repositories.sqlite_thermal_anomaly_repository 
 from src.infrastructure.database.repositories.sqlite_thermal_image_repository import SqliteThermalImageRepository
 from src.infrastructure.database.repositories.sqlite_report_repository import SqliteReportRepository
 from src.infrastructure.database.repositories.sqlite_user_repository import SqliteUserRepository
-from src.application.services.user_service import UserService, DEFAULT_ADMIN_PASSWORD
+from src.application.services.user_service import UserService
 from src.application.services.session_service import SessionManager
 from src.presentation.dataset_audit_window import DatasetAuditWidget
 
@@ -749,9 +749,8 @@ class MainWindow(QMainWindow):
         else:
             user_repo = SqliteUserRepository(self.db)
             user_svc = UserService(user_repo)
-            admin_user = user_svc.ensure_default_admin()
+            user_svc.ensure_default_admin()
             self.session_manager = SessionManager(user_svc)
-            self.session_manager.login(admin_user.username, DEFAULT_ADMIN_PASSWORD)
 
         self._setup_ui()
         self.stacked = self.stack
@@ -959,6 +958,23 @@ class MainWindow(QMainWindow):
             else:
                 self.close()
                 return False
+
+        # Guarda adicional: se o usuário autenticado por algum motivo ainda possui must_change_password
+        curr = self.session_manager.current_user
+        if curr and curr.must_change_password:
+            from src.presentation.force_password_change_dialog import ForcePasswordChangeDialog
+            change_dlg = ForcePasswordChangeDialog(
+                user=curr,
+                user_service=self.session_manager.user_service,
+                parent=self,
+            )
+            if change_dlg.exec() != QDialog.Accepted or curr.must_change_password:
+                self.session_manager.logout()
+                self._update_user_display()
+                self.hide()
+                self.close()
+                return False
+
         return True
 
     def check_license_guard(self, target_index: int) -> bool:
