@@ -173,3 +173,211 @@ class TestImageImportService:
         result = service.import_images(request)
         assert result.is_failure is True
         assert "Inspeção não encontrada" in result.error
+
+    def test_import_rejects_oversized_file(self, in_memory_db, sample_test_files, tmp_path, monkeypatch):
+        """Valida que arquivo excedendo MAX_FILE_SIZE_MB é rejeitado com mensagem clara."""
+        proj_repo = SqliteProjectRepository(in_memory_db)
+        insp_repo = SqliteInspectionRepository(in_memory_db)
+        img_repo = SqliteThermalImageRepository(in_memory_db)
+
+        project = proj_repo.save(Project(name="UFV MaxSize", client_name="C", location_name="L", capacity_kwp=100.0))
+        inspection = insp_repo.save(Inspection(project_id=project.id, title="Insp MaxSize", inspector_name="Insp"))
+
+        service = ImageImportService(inspection_repository=insp_repo, thermal_image_repository=img_repo)
+
+        # Ajusta o limite para um valor estritamente menor que o arquivo existente
+        actual_size_bytes = sample_test_files[0].stat().st_size
+        monkeypatch.setattr(service, "MAX_FILE_SIZE_MB", (actual_size_bytes / 2) / (1024 * 1024))
+
+        request = ImportBatchRequest(
+            inspection_id=inspection.id,
+            file_paths=[sample_test_files[0]],  # JPG válido, mas cujo tamanho excede o limite configurado
+            generate_previews=False,
+        )
+
+        res = service.import_images(request)
+        assert res.is_success is True
+        batch = res.value
+        assert batch.successful_count == 0
+        assert batch.failed_count == 1
+        assert any("excede o tamanho máximo permitido" in err for err in batch.errors)
+
+    def test_import_rejects_non_image_content_with_image_extension(self, in_memory_db, tmp_path):
+        """Valida que arquivo com extensão .jpg mas conteúdo texto/não-imagem é rejeitado por magic bytes."""
+        proj_repo = SqliteProjectRepository(in_memory_db)
+        insp_repo = SqliteInspectionRepository(in_memory_db)
+        img_repo = SqliteThermalImageRepository(in_memory_db)
+
+        project = proj_repo.save(Project(name="UFV Fake", client_name="C", location_name="L", capacity_kwp=100.0))
+        inspection = insp_repo.save(Inspection(project_id=project.id, title="Insp Fake", inspector_name="Insp"))
+
+        fake_file = tmp_path / "fake_image.jpg"
+        fake_file.write_text("ISTO_NAO_E_UMA_IMAGEM_E_TEXTO_PURO")
+
+        service = ImageImportService(inspection_repository=insp_repo, thermal_image_repository=img_repo)
+        request = ImportBatchRequest(
+            inspection_id=inspection.id,
+            file_paths=[fake_file],
+            generate_previews=False,
+        )
+
+        res = service.import_images(request)
+        assert res.is_success is True
+        batch = res.value
+        assert batch.successful_count == 0
+        assert batch.failed_count == 1
+        assert any("Assinatura (magic bytes) inválida" in err or "não é uma imagem válida" in err for err in batch.errors)
+
+    def test_import_rejects_image_exceeding_max_dimensions(self, in_memory_db, tmp_path, monkeypatch):
+        """Valida que imagem com largura ou altura superior a MAX_IMAGE_DIMENSION é rejeitada."""
+        proj_repo = SqliteProjectRepository(in_memory_db)
+        insp_repo = SqliteInspectionRepository(in_memory_db)
+        img_repo = SqliteThermalImageRepository(in_memory_db)
+
+        project = proj_repo.save(Project(name="UFV Dim", client_name="C", location_name="L", capacity_kwp=100.0))
+        inspection = insp_repo.save(Inspection(project_id=project.id, title="Insp Dim", inspector_name="Insp"))
+
+        service = ImageImportService(inspection_repository=insp_repo, thermal_image_repository=img_repo)
+
+        # Ajusta limite para 100 pixels para testar sem precisar alocar imagem gigante em memória
+        monkeypatch.setattr(service, "MAX_IMAGE_DIMENSION", 100)
+
+        # sample_test_files[0] tem dimensões 120x160 (ambas > 100)
+        from PIL import Image as PILImage
+        img_oversized = tmp_path / "oversized.png"
+        PILImage.new("RGB", (150, 80)).save(img_oversized)
+
+        request = ImportBatchRequest(
+            inspection_id=inspection.id,
+            file_paths=[img_oversized],
+            generate_previews=False,
+        )
+
+        res = service.import_images(request)
+        assert res.is_success is True
+        batch = res.value
+        assert batch.successful_count == 0
+        assert batch.failed_count == 1
+        assert any("excedem o limite máximo permitido de 100 pixels" in err for err in batch.errors)
+
+    def test_import_batch_with_valid_and_invalid_files_does_not_halt(self, in_memory_db, sample_test_files, tmp_path, monkeypatch):
+        """
+        Valida que imagens válidas continuam sendo importadas com sucesso mesmo se
+        o lote contiver arquivos acima do limite de tamanho, fake jpg e dimensões excessivas.
+        """
+        proj_repo = SqliteProjectRepository(in_memory_db)
+        insp_repo = SqliteInspectionRepository(in_memory_db)
+        img_repo = SqliteThermalImageRepository(in_memory_db)
+
+        project = proj_repo.save(Project(name="UFV MixedSec", client_name="C", location_name="L", capacity_kwp=100.0))
+        inspection = insp_repo.save(Inspection(project_id=project.id, title="Insp MixedSec", inspector_name="Insp"))
+
+        service = ImageImportService(inspection_repository=insp_repo, thermal_image_repository=img_repo)
+
+        # 1. Arquivo não-imagem com extensão .jpg
+        fake_jpg = tmp_path / "corrupto.jpg"
+        fake_jpg.write_bytes(b"dados_binarios_aleatorios_sem_magic_bytes")
+
+        # 2. Imagem com dimensões reais acima do limite padrão (ex.: 12001 x 10)
+        from PIL import Image as PILImage
+        oversized_img = tmp_path / "gigante.png"
+        PILImage.new("RGB", (12001, 10)).save(oversized_img)
+
+        # Lote misto: 2 imagens normais válidas + 2 imagens inválidas por segurança
+        mixed_batch = [
+            sample_test_files[0],  # Válido JPG
+            fake_jpg,              # Inválido (conteúdo falso)
+            sample_test_files[1],  # Válido PNG
+            oversized_img,         # Inválido (dimensões > 12000)
+        ]
+
+        request = ImportBatchRequest(
+            inspection_id=inspection.id,
+            file_paths=mixed_batch,
+            generate_previews=False,
+        )
+
+        res = service.import_images(request)
+        assert res.is_success is True
+        batch = res.value
+        assert batch.total_files == 4
+        assert batch.successful_count == 2
+        assert batch.failed_count == 2
+        assert len(batch.errors) == 2
+
+        # As 2 imagens válidas foram persistidas no repositório
+        stored = img_repo.list_by_inspection(inspection.id)
+        assert len(stored) == 2
+
+    def test_import_valid_image_with_exif_and_gps_metadata_persisted_correctly(self, in_memory_db, tmp_path):
+        """
+        Garante que após a validação estrutural com img.verify(),
+        a extração de EXIF e metadados GPS é realizada com sucesso a partir de uma imagem real,
+        provando que os descritores e dados do arquivo não são corrompidos nem invalidados.
+        """
+        import piexif
+        from PIL import Image as PILImage
+        from datetime import datetime
+
+        proj_repo = SqliteProjectRepository(in_memory_db)
+        insp_repo = SqliteInspectionRepository(in_memory_db)
+        img_repo = SqliteThermalImageRepository(in_memory_db)
+
+        project = proj_repo.save(Project(name="UFV ExifCheck", client_name="Cliente Exif", location_name="Nordeste", capacity_kwp=500.0))
+        inspection = insp_repo.save(Inspection(project_id=project.id, title="Voo Verificacao EXIF", inspector_name="Inspetor Drone"))
+
+        # Cria uma imagem JPG real com tags EXIF e GPS embutidas via piexif
+        exif_jpg_path = tmp_path / "DJI_EXIF_TEST.JPG"
+        img = PILImage.fromarray(np.zeros((120, 160, 3), dtype=np.uint8))
+
+        exif_dict = {
+            "0th": {},
+            "Exif": {
+                piexif.ExifIFD.DateTimeOriginal: b"2026:09:13 10:30:00",
+            },
+            "GPS": {
+                piexif.GPSIFD.GPSLatitude: ((12, 1), (58, 1), (1704, 100)),
+                piexif.GPSIFD.GPSLatitudeRef: "S",
+                piexif.GPSIFD.GPSLongitude: ((38, 1), (30, 1), (504, 100)),
+                piexif.GPSIFD.GPSLongitudeRef: "W",
+            },
+            "1st": {},
+            "thumbnail": None,
+        }
+        exif_bytes = piexif.dump(exif_dict)
+        img.save(exif_jpg_path, exif=exif_bytes)
+
+        service = ImageImportService(inspection_repository=insp_repo, thermal_image_repository=img_repo)
+
+        request = ImportBatchRequest(
+            inspection_id=inspection.id,
+            file_paths=[exif_jpg_path],
+            generate_previews=False,
+        )
+
+        res = service.import_images(request)
+        assert res.is_success is True
+        batch = res.value
+        assert batch.successful_count == 1
+        assert batch.failed_count == 0
+        assert len(batch.errors) == 0
+
+        # Validação do DTO retornado
+        imported_dto = batch.imported_images[0]
+        assert imported_dto.filename == "DJI_EXIF_TEST.JPG"
+        assert imported_dto.width == 160
+        assert imported_dto.height == 120
+        assert imported_dto.has_gps is True
+        assert pytest.approx(imported_dto.latitude, abs=0.0001) == -12.9714
+        assert pytest.approx(imported_dto.longitude, abs=0.0001) == -38.5014
+
+        # Validação da Entidade no Repositório SQLite
+        stored_images = img_repo.list_by_inspection(inspection.id)
+        assert len(stored_images) == 1
+        entity = stored_images[0]
+        assert entity.captured_at == datetime(2026, 9, 13, 10, 30)
+        assert entity.coordinate is not None
+        assert pytest.approx(entity.coordinate.latitude, abs=0.0001) == -12.9714
+        assert pytest.approx(entity.coordinate.longitude, abs=0.0001) == -38.5014
+
+
