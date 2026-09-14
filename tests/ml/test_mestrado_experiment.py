@@ -150,3 +150,33 @@ class TestExperimentalEvaluationService:
             assert result.validation_xlsx_path.exists()
             assert result.validation_csv_path.exists()
             assert result.confusion_matrix_img_path.exists()
+
+    def test_resolve_val_dirs_dynamic_conventions(self, tmp_path):
+        """Valida a resolução dinâmica para diferentes convenções de pastas YOLO."""
+        # Cenário 1: val/images e val/labels (Padrão YOLO/Roboflow alternativo)
+        ds1 = tmp_path / "ds_val_standard"
+        (ds1 / "val" / "images").mkdir(parents=True)
+        (ds1 / "val" / "labels").mkdir(parents=True)
+        img_dir, lbl_dir = ExperimentalEvaluationService._resolve_val_dirs(ds1)
+        assert img_dir == ds1 / "val" / "images"
+        assert lbl_dir == ds1 / "val" / "labels"
+
+        # Cenário 2: valid/images e valid/labels
+        ds2 = tmp_path / "ds_valid_roboflow"
+        (ds2 / "valid" / "images").mkdir(parents=True)
+        (ds2 / "valid" / "labels").mkdir(parents=True)
+        img_dir, lbl_dir = ExperimentalEvaluationService._resolve_val_dirs(ds2)
+        assert img_dir == ds2 / "valid" / "images"
+        assert lbl_dir == ds2 / "valid" / "labels"
+
+        # Cenário 3: Configurado explicitamente no data.yaml
+        ds3 = tmp_path / "ds_custom_yaml"
+        custom_val_img = ds3 / "custom_split" / "images"
+        custom_val_lbl = ds3 / "custom_split" / "labels"
+        custom_val_img.mkdir(parents=True)
+        custom_val_lbl.mkdir(parents=True)
+        yaml_file = ds3 / "data.yaml"
+        yaml_file.write_text("val: custom_split/images\nnames: ['pv_panel']\n")
+        img_dir, lbl_dir = ExperimentalEvaluationService._resolve_val_dirs(ds3, data_yaml_path=yaml_file)
+        assert img_dir == custom_val_img
+        assert lbl_dir == custom_val_lbl

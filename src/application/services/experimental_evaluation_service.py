@@ -96,7 +96,7 @@ class ExperimentalEvaluationService:
         # ---------------------------------------------------------------------
         logger.info("Passo 1/6: Executando Auditoria Estrutural e Sintática do Dataset...")
         auditor = DatasetAuditor(allowed_classes=None)
-        audit_result = auditor.audit(d_path)
+        audit_result = auditor.audit(yaml_path if yaml_path.exists() else d_path)
 
         audit_pdf_path = self.output_dir / "dataset_audit_mestrado.pdf"
         pdf_gen = DatasetPdfReportGenerator()
@@ -159,6 +159,7 @@ class ExperimentalEvaluationService:
             dataset_dir=d_path,
             weights_path=weights_path,
             class_names=class_names,
+            data_yaml_path=yaml_path,
             device=device,
         )
 
@@ -270,11 +271,81 @@ class ExperimentalEvaluationService:
             execution_duration_seconds=duration,
         )
 
+    @classmethod
+    def _resolve_val_dirs(
+        cls,
+        dataset_dir: Path,
+        data_yaml_path: Optional[Path] = None,
+    ) -> Tuple[Optional[Path], Optional[Path]]:
+        """
+        Descobre dinamicamente os diretórios de imagens e labels do conjunto de validação.
+        Prioriza data.yaml e inspeciona todas as convenções usuais do formato YOLO.
+        """
+        # 1. Tentar ler caminho configurado em data.yaml
+        yaml_candidates = [
+            data_yaml_path,
+            dataset_dir / "data.yaml",
+            dataset_dir / "data.yml",
+        ]
+        for y_path in yaml_candidates:
+            if y_path and y_path.exists():
+                try:
+                    import yaml
+                    with open(y_path, "r", encoding="utf-8") as f:
+                        ydata = yaml.safe_load(f)
+                    if isinstance(ydata, dict) and "val" in ydata:
+                        val_entry = str(ydata["val"]).strip()
+                        val_p = Path(val_entry)
+                        base_root = dataset_dir
+                        if "path" in ydata and ydata["path"]:
+                            base_root = Path(ydata["path"])
+                        elif not val_p.is_absolute():
+                            base_root = y_path.parent
+
+                        resolved_img = (base_root / val_p).resolve() if not val_p.is_absolute() else val_p.resolve()
+                        if resolved_img.is_file():
+                            resolved_img = resolved_img.parent
+
+                        if resolved_img.exists() and resolved_img.is_dir():
+                            # Encontrar diretório de labels correspondente
+                            resolved_lbl = None
+                            if "images" in resolved_img.parts:
+                                parts = list(resolved_img.parts)
+                                idx = len(parts) - 1 - parts[::-1].index("images")
+                                parts[idx] = "labels"
+                                resolved_lbl = Path(*parts)
+                            elif (resolved_img.parent / "labels").exists():
+                                resolved_lbl = resolved_img.parent / "labels"
+                            elif (resolved_img / "labels").exists():
+                                resolved_lbl = resolved_img / "labels"
+                            else:
+                                resolved_lbl = resolved_img
+
+                            return resolved_img, resolved_lbl if resolved_lbl.exists() else resolved_img
+                except Exception as ex:
+                    logger.warning(f"Erro ao inferir pasta de validação a partir de {y_path}: {ex}")
+
+        # 2. Convenções comuns de estrutura de diretório YOLO
+        standard_pairs = [
+            (dataset_dir / "val" / "images", dataset_dir / "val" / "labels"),
+            (dataset_dir / "valid" / "images", dataset_dir / "valid" / "labels"),
+            (dataset_dir / "images" / "val", dataset_dir / "labels" / "val"),
+            (dataset_dir / "images" / "valid", dataset_dir / "labels" / "valid"),
+            (dataset_dir / "val", dataset_dir / "val"),
+            (dataset_dir / "valid", dataset_dir / "valid"),
+        ]
+        for img_d, lbl_d in standard_pairs:
+            if img_d.exists() and img_d.is_dir():
+                return img_d, lbl_d if lbl_d.exists() else img_d
+
+        return None, None
+
     def _extract_real_ground_truth_and_predictions(
         self,
         dataset_dir: Path,
         weights_path: Path,
         class_names: Dict[int, str],
+        data_yaml_path: Optional[Path] = None,
         device: str = "cpu",
     ) -> Tuple[List[str], List[str], List[str]]:
         """
@@ -286,12 +357,12 @@ class ExperimentalEvaluationService:
         from ultralytics import YOLO
         model = YOLO(str(weights_path))
 
-        # Localiza diretório de validação
-        val_img_dir = dataset_dir / "valid" / "images"
-        val_lbl_dir = dataset_dir / "valid" / "labels"
-        if not val_img_dir.exists():
-            val_img_dir = dataset_dir / "images" / "val"
-            val_lbl_dir = dataset_dir / "labels" / "val"
+        # Se class_names estiver vazio ou incompleto, recupera diretamente da taxonomia do modelo
+        if not class_names and hasattr(model, "names") and model.names:
+            class_names = {int(k): str(v) for k, v in model.names.items()}
+
+        # Localiza dinamicamente diretório de validação
+        val_img_dir, val_lbl_dir = self._resolve_val_dirs(dataset_dir, data_yaml_path)
 
         # A lista de labels inclui as classes do dataset mais a classe 'background'
         labels_list = [class_names[idx] for idx in sorted(class_names.keys())]
@@ -301,14 +372,15 @@ class ExperimentalEvaluationService:
         y_true: List[str] = []
         y_pred: List[str] = []
 
-        if not val_img_dir.exists():
-            logger.warning(f"Diretório de validação não encontrado em {val_img_dir}")
+        if not val_img_dir or not val_img_dir.exists():
+            logger.warning(f"Diretório de validação não encontrado para o dataset em {dataset_dir}")
             return y_true, y_pred, labels_list
 
         img_files = sorted([f for f in val_img_dir.iterdir() if f.suffix.lower() in [".jpg", ".jpeg", ".png"]])
+        active_lbl_dir = val_lbl_dir if (val_lbl_dir and val_lbl_dir.exists()) else val_img_dir
 
         for img_file in img_files:
-            lbl_file = val_lbl_dir / f"{img_file.stem}.txt"
+            lbl_file = active_lbl_dir / f"{img_file.stem}.txt"
             
             # Ground truth boxes e classes reais
             gt_boxes: List[Tuple[int, float, float, float, float]] = []
